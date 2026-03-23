@@ -13,10 +13,10 @@
 | ID | Task | Context | Deps | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | 1.1 | Инициализация TASKS.md | Создание подробного трекера задач. | - | [x] |
-| 1.2 | `uv` Workspace Setup | `uv init`, создание `pyproject.toml`, настройка виртуального окружения. | - | [/] |
+| 1.2 | `uv` Workspace Setup | `uv init` выполнен, зависимости (fastapi, aiogram, etc) добавлены. Commit: a18ce42. | - | [x] |
+| 1.3 | Ruff & Pre-commit | Ruff настроен в pyproject.toml. Исправлены первые ошибки. Commit: c40f645. | 1.2 | [x] |
+| 1.4 | Pytest Async Config | Настройка `conftest.py` и `pytest.ini` для асинхронных тестов. | 1.2 | [/] |
 
-| 1.3 | Ruff & Pre-commit | Настройка линтинга и хуков для соблюдения стиля task-planner. | 1.2 | [ ] |
-| 1.4 | Pytest Async Config | Настройка `conftest.py` и `pytest.ini` для асинхронных тестов. | 1.2 | [ ] |
 | 1.5 | Makefile Automation | Команды: `up`, `down`, `test`, `lint`, `migrate`, `logs`. | 1.2 | [ ] |
 | 1.6 | `.env.example` | Создание шаблона переменных окружения со всеми секциями. | - | [ ] |
 
