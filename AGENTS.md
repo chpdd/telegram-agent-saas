@@ -22,6 +22,7 @@ Multi-tenant SaaS platform for AI Telegram bots, built with a monorepo-style ser
 2. **Tenant Isolation**: Every SQL query must be filtered by `tenant_id`.
 3. **No Vector DB**: Use **PostgreSQL Full Text Search** (FTS) for semantics and **JSONB** for flexible catalog attributes.
 4. **LLM Watchdog**: A separate background observer must handle the 30s timeout for responses.
+5. **Model Strategy**: Use **Gemini 3.1 Pro** for complex architectural tasks, logic-heavy implementations (e.g., Dynamic SQL Query Builder), and session analysis.
 
 ## 5. Task Execution Protocol (CRITICAL)
 1. **Selection**: Always look at `TASKS.md` and pick the first task with status `[ ]` (Todo) in chronological order.
