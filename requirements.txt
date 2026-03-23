@@ -1,0 +1,32 @@
+# Core
+fastapi
+uvicorn
+pydantic
+pydantic-settings
+python-multipart
+
+# Telegram
+aiogram
+
+# Database
+sqlalchemy[asyncio]
+asyncpg
+pgvector
+redis
+
+# LLM & AI
+langchain
+langchain-openai
+langchain-community
+openai
+
+# Dashboard
+streamlit
+pandas
+plotly
+
+# Utils
+python-dotenv
+alembic
+uuid
+asyncio

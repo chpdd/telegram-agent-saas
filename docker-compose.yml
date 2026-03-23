@@ -1,0 +1,59 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: tca_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: telegram_ai_agent
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d telegram_ai_agent"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    container_name: tca_redis
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    container_name: tca_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user:password@db:5432/telegram_ai_agent
+      REDIS_URL: redis://redis:6379/0
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  dashboard:
+    build: .
+    container_name: tca_dashboard
+    command: streamlit run app/dashboard/admin_panel.py --server.port 8501 --server.address 0.0.0.0
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user:password@db:5432/telegram_ai_agent
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8501:8501"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
