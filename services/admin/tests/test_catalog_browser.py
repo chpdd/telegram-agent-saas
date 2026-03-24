@@ -30,8 +30,7 @@ def test_normalize_catalog_filters_rejects_bad_tenant():
         normalize_catalog_filters("bad-tenant")
 
 
-@pytest.mark.asyncio
-async def test_list_catalog_products_returns_flat_rows(mocker):
+def test_list_catalog_products_returns_flat_rows(mocker):
     rows = [
         {
             "id": uuid4(),
@@ -44,10 +43,10 @@ async def test_list_catalog_products_returns_flat_rows(mocker):
     ]
     result = mocker.Mock()
     result.mappings.return_value.all.return_value = rows
-    session = mocker.AsyncMock()
+    session = mocker.Mock()
     session.execute.return_value = result
 
-    products = await list_catalog_products(
+    products = list_catalog_products(
         session,
         tenant_id="11111111-1111-1111-1111-111111111111",
         category="Логистика",
@@ -65,4 +64,4 @@ async def test_list_catalog_products_returns_flat_rows(mocker):
             "price": 800.0,
         }
     ]
-    session.execute.assert_awaited_once()
+    session.execute.assert_called_once()

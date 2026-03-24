@@ -65,16 +65,7 @@ def test_bootstrap_runtime_sets_page_config_and_session_state(mocker):
     )
 
 
-def test_run_async_reuses_single_event_loop():
+def test_admin_module_uses_sync_session_factory():
     admin_main = _load_admin_main()
 
-    first_result = admin_main.run_async(_noop("first"))
-    second_result = admin_main.run_async(_noop("second"))
-
-    assert first_result == "first"
-    assert second_result == "second"
-    assert admin_main.get_admin_event_loop() is admin_main.get_admin_event_loop()
-
-
-async def _noop(value: str):
-    return value
+    assert admin_main.session_maker is not None

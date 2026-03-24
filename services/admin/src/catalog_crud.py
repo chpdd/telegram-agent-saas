@@ -4,7 +4,7 @@ import json
 from uuid import UUID, uuid4
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 
 def normalize_product_payload(
@@ -55,8 +55,8 @@ def normalize_product_payload(
     }
 
 
-async def create_catalog_product(
-    session: AsyncSession,
+def create_catalog_product(
+    session: Session,
     *,
     tenant_id: str,
     name: str | None,
@@ -73,7 +73,7 @@ async def create_catalog_product(
         price=price,
         description=description,
     )
-    await session.execute(
+    session.execute(
         text(
             """
             insert into products (id, tenant_id, name, description, attributes)
@@ -102,7 +102,7 @@ async def create_catalog_product(
             ),
         },
     )
-    await session.commit()
+    session.commit()
     return {
         "id": str(payload["product_id"]),
         "name": str(payload["name"]),
@@ -113,8 +113,8 @@ async def create_catalog_product(
     }
 
 
-async def update_catalog_product(
-    session: AsyncSession,
+def update_catalog_product(
+    session: Session,
     *,
     tenant_id: str,
     product_id: str,
@@ -133,7 +133,7 @@ async def update_catalog_product(
         price=price,
         description=description,
     )
-    result = await session.execute(
+    result = session.execute(
         text(
             """
             update products
@@ -162,7 +162,7 @@ async def update_catalog_product(
     )
     if result.rowcount != 1:
         raise ValueError("Товар не найден")
-    await session.commit()
+    session.commit()
     return {
         "id": str(payload["product_id"]),
         "name": str(payload["name"]),
@@ -173,8 +173,8 @@ async def update_catalog_product(
     }
 
 
-async def delete_catalog_product(
-    session: AsyncSession,
+def delete_catalog_product(
+    session: Session,
     *,
     tenant_id: str,
     product_id: str,
@@ -185,10 +185,10 @@ async def delete_catalog_product(
     except (AttributeError, ValueError) as exc:
         raise ValueError("tenant_id и product_id должны быть валидными UUID") from exc
 
-    result = await session.execute(
+    result = session.execute(
         text("delete from products where id = :product_id and tenant_id = :tenant_id"),
         {"product_id": product_uuid, "tenant_id": tenant_uuid},
     )
     if result.rowcount != 1:
         raise ValueError("Товар не найден")
-    await session.commit()
+    session.commit()

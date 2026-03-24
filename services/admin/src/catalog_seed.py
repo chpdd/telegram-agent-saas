@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 
 def normalize_tenant_uuid(value: str) -> UUID:
@@ -42,15 +42,15 @@ def load_seed_catalog(source_path: Path) -> list[dict]:
     return products
 
 
-async def import_seed_catalog(
-    session: AsyncSession,
+def import_seed_catalog(
+    session: Session,
     *,
     tenant_id: str,
     source_path: Path,
     replace_existing: bool = True,
 ) -> int:
     tenant_uuid = normalize_tenant_uuid(tenant_id)
-    tenant_exists = await session.scalar(
+    tenant_exists = session.scalar(
         text("select 1 from tenants where id = :tenant_id"),
         {"tenant_id": tenant_uuid},
     )
@@ -59,7 +59,7 @@ async def import_seed_catalog(
 
     products = load_seed_catalog(source_path)
     if replace_existing:
-        await session.execute(
+        session.execute(
             text("delete from products where tenant_id = :tenant_id"),
             {"tenant_id": tenant_uuid},
         )
@@ -74,7 +74,7 @@ async def import_seed_catalog(
         }
         for product in products
     ]
-    await session.execute(
+    session.execute(
         text(
             """
             insert into products (id, tenant_id, name, description, attributes)
@@ -83,5 +83,5 @@ async def import_seed_catalog(
         ),
         rows,
     )
-    await session.commit()
+    session.commit()
     return len(rows)

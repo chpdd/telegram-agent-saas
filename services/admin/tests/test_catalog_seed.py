@@ -47,8 +47,7 @@ def test_load_seed_catalog_extracts_products(tmp_path: Path):
     }
 
 
-@pytest.mark.asyncio
-async def test_import_seed_catalog_replaces_existing_rows(mocker, tmp_path: Path):
+def test_import_seed_catalog_replaces_existing_rows(mocker, tmp_path: Path):
     source = tmp_path / "services.json"
     source.write_text(
         json.dumps(
@@ -57,30 +56,29 @@ async def test_import_seed_catalog_replaces_existing_rows(mocker, tmp_path: Path
         ),
         encoding="utf-8",
     )
-    session = mocker.AsyncMock()
+    session = mocker.Mock()
     session.scalar.return_value = 1
 
-    count = await import_seed_catalog(
+    count = import_seed_catalog(
         session,
         tenant_id="11111111-1111-1111-1111-111111111111",
         source_path=source,
     )
 
     assert count == 1
-    assert session.scalar.await_count == 1
-    assert session.execute.await_count == 2
-    session.commit.assert_awaited_once()
+    session.scalar.assert_called_once()
+    assert session.execute.call_count == 2
+    session.commit.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_import_seed_catalog_requires_existing_tenant(mocker, tmp_path: Path):
+def test_import_seed_catalog_requires_existing_tenant(mocker, tmp_path: Path):
     source = tmp_path / "services.json"
     source.write_text("[]", encoding="utf-8")
-    session = mocker.AsyncMock()
+    session = mocker.Mock()
     session.scalar.return_value = None
 
     with pytest.raises(ValueError, match="Tenant не найден"):
-        await import_seed_catalog(
+        import_seed_catalog(
             session,
             tenant_id="11111111-1111-1111-1111-111111111111",
             source_path=source,

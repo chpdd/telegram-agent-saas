@@ -27,11 +27,10 @@ def test_mask_bot_token_hides_middle_part():
     assert mask_bot_token("12345678") == "********"
 
 
-@pytest.mark.asyncio
-async def test_create_tenant_executes_insert_and_commit(mocker):
-    session = mocker.AsyncMock()
+def test_create_tenant_executes_insert_and_commit(mocker):
+    session = mocker.Mock()
 
-    created = await create_tenant(
+    created = create_tenant(
         session,
         tenant_id="11111111-1111-1111-1111-111111111111",
         bot_token="bot-token",
@@ -43,12 +42,11 @@ async def test_create_tenant_executes_insert_and_commit(mocker):
         "bot_token": "bot-token",
         "system_prompt": "assistant",
     }
-    session.execute.assert_awaited_once()
-    session.commit.assert_awaited_once()
+    session.execute.assert_called_once()
+    session.commit.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_list_tenants_masks_tokens(mocker):
+def test_list_tenants_masks_tokens(mocker):
     rows = [
         {
             "id": UUID("11111111-1111-1111-1111-111111111111"),
@@ -58,10 +56,10 @@ async def test_list_tenants_masks_tokens(mocker):
     ]
     result = mocker.Mock()
     result.mappings.return_value.all.return_value = rows
-    session = mocker.AsyncMock()
+    session = mocker.Mock()
     session.execute.return_value = result
 
-    tenants = await list_tenants(session)
+    tenants = list_tenants(session)
 
     assert tenants == [
         {

@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 
 def normalize_catalog_filters(
@@ -29,8 +29,8 @@ def normalize_catalog_filters(
     }
 
 
-async def list_catalog_products(
-    session: AsyncSession,
+def list_catalog_products(
+    session: Session,
     *,
     tenant_id: str,
     category: str | None = None,
@@ -38,7 +38,7 @@ async def list_catalog_products(
     limit: int = 100,
 ) -> list[dict[str, str | float | None]]:
     filters = normalize_catalog_filters(tenant_id, category, query, limit)
-    result = await session.execute(
+    result = session.execute(
         text(
             """
             select

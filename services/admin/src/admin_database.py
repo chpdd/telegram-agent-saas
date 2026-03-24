@@ -1,18 +1,21 @@
-from collections.abc import AsyncGenerator
+from collections.abc import Generator
 
 from core.config import get_settings
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 settings = get_settings()
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
+sync_database_url = settings.DATABASE_URL.replace("+asyncpg", "+psycopg")
+
+engine = create_engine(
+    sync_database_url,
     pool_pre_ping=True,
 )
 
-async_session_maker = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+session_maker = sessionmaker(bind=engine, expire_on_commit=False, class_=Session)
 
 
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session_maker() as session:
+def get_session() -> Generator[Session, None, None]:
+    with session_maker() as session:
         yield session

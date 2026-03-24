@@ -38,11 +38,10 @@ def test_normalize_product_payload_validates_required_fields():
         )
 
 
-@pytest.mark.asyncio
-async def test_create_catalog_product_inserts_row(mocker):
-    session = mocker.AsyncMock()
+def test_create_catalog_product_inserts_row(mocker):
+    session = mocker.Mock()
 
-    created = await create_catalog_product(
+    created = create_catalog_product(
         session,
         tenant_id="11111111-1111-1111-1111-111111111111",
         name="Штукатурка",
@@ -53,17 +52,16 @@ async def test_create_catalog_product_inserts_row(mocker):
     )
 
     assert created["name"] == "Штукатурка"
-    session.execute.assert_awaited_once()
-    session.commit.assert_awaited_once()
+    session.execute.assert_called_once()
+    session.commit.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_update_catalog_product_requires_existing_row(mocker):
-    session = mocker.AsyncMock()
+def test_update_catalog_product_requires_existing_row(mocker):
+    session = mocker.Mock()
     session.execute.return_value.rowcount = 0
 
     with pytest.raises(ValueError, match="Товар не найден"):
-        await update_catalog_product(
+        update_catalog_product(
             session,
             tenant_id="11111111-1111-1111-1111-111111111111",
             product_id="22222222-2222-2222-2222-222222222222",
@@ -75,16 +73,15 @@ async def test_update_catalog_product_requires_existing_row(mocker):
         )
 
 
-@pytest.mark.asyncio
-async def test_delete_catalog_product_deletes_row(mocker):
-    session = mocker.AsyncMock()
+def test_delete_catalog_product_deletes_row(mocker):
+    session = mocker.Mock()
     session.execute.return_value.rowcount = 1
 
-    await delete_catalog_product(
+    delete_catalog_product(
         session,
         tenant_id="11111111-1111-1111-1111-111111111111",
         product_id="22222222-2222-2222-2222-222222222222",
     )
 
-    session.execute.assert_awaited_once()
-    session.commit.assert_awaited_once()
+    session.execute.assert_called_once()
+    session.commit.assert_called_once()

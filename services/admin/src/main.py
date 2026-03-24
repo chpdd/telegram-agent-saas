@@ -1,9 +1,7 @@
-import asyncio
-from functools import lru_cache
 from pathlib import Path
 
 import streamlit as st
-from admin_database import async_session_maker
+from admin_database import session_maker
 from auth import AUTH_STATUS_KEY, TENANT_ID_KEY, apply_auth
 from catalog_browser import list_catalog_products
 from catalog_crud import create_catalog_product, delete_catalog_product, update_catalog_product
@@ -36,18 +34,6 @@ def bootstrap_runtime() -> Settings:
     return settings
 
 
-@lru_cache(maxsize=1)
-def get_admin_event_loop() -> asyncio.AbstractEventLoop:
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    return loop
-
-
-def run_async(coro):
-    loop = get_admin_event_loop()
-    return loop.run_until_complete(coro)
-
-
 def render_auth() -> None:
     st.title("Dashboard Login")
     st.caption("Введите ID магазина для входа в демо-режиме.")
@@ -75,18 +61,18 @@ def render_dashboard() -> None:
     render_live_chat_monitor()
 
 
-async def _list_tenants() -> list[dict[str, str | None]]:
-    async with async_session_maker() as session:
-        return await list_tenants(session)
+def _list_tenants() -> list[dict[str, str | None]]:
+    with session_maker() as session:
+        return list_tenants(session)
 
 
-async def _create_tenant(
+def _create_tenant(
     tenant_id: str | None,
     bot_token: str | None,
     system_prompt: str | None,
 ) -> dict[str, str | None]:
-    async with async_session_maker() as session:
-        return await create_tenant(
+    with session_maker() as session:
+        return create_tenant(
             session,
             tenant_id=tenant_id,
             bot_token=bot_token,
@@ -94,23 +80,23 @@ async def _create_tenant(
         )
 
 
-async def _import_catalog_seed(tenant_id: str) -> int:
-    async with async_session_maker() as session:
-        return await import_seed_catalog(
+def _import_catalog_seed(tenant_id: str) -> int:
+    with session_maker() as session:
+        return import_seed_catalog(
             session,
             tenant_id=tenant_id,
             source_path=DEFAULT_CATALOG_SEED_PATH,
         )
 
 
-async def _list_catalog_products(
+def _list_catalog_products(
     tenant_id: str,
     category: str | None = None,
     query: str | None = None,
     limit: int = 100,
 ) -> list[dict[str, str | float | None]]:
-    async with async_session_maker() as session:
-        return await list_catalog_products(
+    with session_maker() as session:
+        return list_catalog_products(
             session,
             tenant_id=tenant_id,
             category=category,
@@ -119,7 +105,7 @@ async def _list_catalog_products(
         )
 
 
-async def _create_catalog_product(
+def _create_catalog_product(
     tenant_id: str,
     *,
     name: str | None,
@@ -128,8 +114,8 @@ async def _create_catalog_product(
     measure: str | None,
     price: float | int | None,
 ) -> dict[str, str | float | None]:
-    async with async_session_maker() as session:
-        return await create_catalog_product(
+    with session_maker() as session:
+        return create_catalog_product(
             session,
             tenant_id=tenant_id,
             name=name,
@@ -140,7 +126,7 @@ async def _create_catalog_product(
         )
 
 
-async def _update_catalog_product(
+def _update_catalog_product(
     tenant_id: str,
     *,
     product_id: str,
@@ -150,8 +136,8 @@ async def _update_catalog_product(
     measure: str | None,
     price: float | int | None,
 ) -> dict[str, str | float | None]:
-    async with async_session_maker() as session:
-        return await update_catalog_product(
+    with session_maker() as session:
+        return update_catalog_product(
             session,
             tenant_id=tenant_id,
             product_id=product_id,
@@ -163,9 +149,9 @@ async def _update_catalog_product(
         )
 
 
-async def _delete_catalog_product(tenant_id: str, *, product_id: str) -> None:
-    async with async_session_maker() as session:
-        await delete_catalog_product(
+def _delete_catalog_product(tenant_id: str, *, product_id: str) -> None:
+    with session_maker() as session:
+        delete_catalog_product(
             session,
             tenant_id=tenant_id,
             product_id=product_id,
@@ -182,7 +168,7 @@ def render_tenant_management() -> None:
 
     if st.button("Создать tenant"):
         try:
-            created = run_async(_create_tenant(tenant_id, bot_token, system_prompt))
+            created = _create_tenant(tenant_id, bot_token, system_prompt)
             st.success(f"Tenant создан: {created['tenant_id']}")
         except ValueError as exc:
             st.error(str(exc))
@@ -190,7 +176,7 @@ def render_tenant_management() -> None:
             st.error(f"Не удалось создать tenant: {exc}")
 
     try:
-        tenants = run_async(_list_tenants())
+        tenants = _list_tenants()
     except Exception as exc:  # pragma: no cover
         st.error(f"Не удалось загрузить tenants: {exc}")
         return
@@ -199,7 +185,7 @@ def render_tenant_management() -> None:
         st.info("Tenant-ов пока нет.")
         return
 
-    st.dataframe(tenants, use_container_width=True)
+    st.dataframe(tenants, width="stretch")
     st.divider()
 
 
@@ -213,7 +199,7 @@ def render_catalog_seed_import() -> None:
     st.caption(f"Импорт из `{DEFAULT_CATALOG_SEED_PATH.name}` для tenant `{tenant_id}`.")
     if st.button("Импортировать демо-каталог"):
         try:
-            imported_count = run_async(_import_catalog_seed(tenant_id))
+            imported_count = _import_catalog_seed(tenant_id)
             st.success(f"Импортировано позиций: {imported_count}")
         except ValueError as exc:
             st.error(str(exc))
@@ -234,13 +220,11 @@ def render_catalog_browser() -> None:
     limit = st.number_input("Лимит", min_value=1, max_value=500, value=100, step=10)
 
     try:
-        products = run_async(
-            _list_catalog_products(
-                tenant_id,
-                category=category,
-                query=query,
-                limit=int(limit),
-            )
+        products = _list_catalog_products(
+            tenant_id,
+            category=category,
+            query=query,
+            limit=int(limit),
         )
     except ValueError as exc:
         st.error(str(exc))
@@ -254,7 +238,7 @@ def render_catalog_browser() -> None:
         st.divider()
         return
 
-    st.dataframe(products, use_container_width=True)
+    st.dataframe(products, width="stretch")
     st.caption(f"Найдено позиций: {len(products)}")
 
     product_options = {
@@ -297,15 +281,13 @@ def render_catalog_browser() -> None:
     if crud_mode == "Создать":
         if st.button("Создать товар"):
             try:
-                created = run_async(
-                    _create_catalog_product(
-                        tenant_id,
-                        name=product_name,
-                        description=product_description,
-                        category=product_category,
-                        measure=product_measure,
-                        price=product_price,
-                    )
+                created = _create_catalog_product(
+                    tenant_id,
+                    name=product_name,
+                    description=product_description,
+                    category=product_category,
+                    measure=product_measure,
+                    price=product_price,
                 )
                 st.success(f"Товар создан: {created['id']}")
             except ValueError as exc:
@@ -315,16 +297,14 @@ def render_catalog_browser() -> None:
     elif crud_mode == "Обновить":
         if st.button("Сохранить товар"):
             try:
-                updated = run_async(
-                    _update_catalog_product(
-                        tenant_id,
-                        product_id=selected_product["id"],
-                        name=product_name,
-                        description=product_description,
-                        category=product_category,
-                        measure=product_measure,
-                        price=product_price,
-                    )
+                updated = _update_catalog_product(
+                    tenant_id,
+                    product_id=selected_product["id"],
+                    name=product_name,
+                    description=product_description,
+                    category=product_category,
+                    measure=product_measure,
+                    price=product_price,
                 )
                 st.success(f"Товар обновлён: {updated['id']}")
             except ValueError as exc:
@@ -335,7 +315,7 @@ def render_catalog_browser() -> None:
         st.warning(f"Будет удалён товар: {selected_product['name']}")
         if st.button("Удалить товар"):
             try:
-                run_async(_delete_catalog_product(tenant_id, product_id=selected_product["id"]))
+                _delete_catalog_product(tenant_id, product_id=selected_product["id"])
                 st.success("Товар удалён")
             except ValueError as exc:
                 st.error(str(exc))

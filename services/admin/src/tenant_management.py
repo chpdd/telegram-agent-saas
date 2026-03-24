@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import UUID, uuid4
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 
 def prepare_tenant_payload(
@@ -38,15 +38,15 @@ def mask_bot_token(bot_token: str) -> str:
     return f"{bot_token[:4]}...{bot_token[-4:]}"
 
 
-async def create_tenant(
-    session: AsyncSession,
+def create_tenant(
+    session: Session,
     *,
     tenant_id: str | None,
     bot_token: str | None,
     system_prompt: str | None,
 ) -> dict[str, str | None]:
     payload = prepare_tenant_payload(tenant_id, bot_token, system_prompt)
-    await session.execute(
+    session.execute(
         text(
             """
             insert into tenants (id, bot_token, system_prompt)
@@ -55,7 +55,7 @@ async def create_tenant(
         ),
         payload,
     )
-    await session.commit()
+    session.commit()
     return {
         "tenant_id": str(payload["tenant_id"]),
         "bot_token": str(payload["bot_token"]),
@@ -63,8 +63,8 @@ async def create_tenant(
     }
 
 
-async def list_tenants(session: AsyncSession) -> list[dict[str, str | None]]:
-    result = await session.execute(
+def list_tenants(session: Session) -> list[dict[str, str | None]]:
+    result = session.execute(
         text(
             """
             select id, bot_token, system_prompt
