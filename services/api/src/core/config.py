@@ -25,7 +25,9 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=Path(__file__).parents[3] / ".env", env_ignore_missing=True)
 
+
 settings = Settings()
+
 
 class BaseSchema(BaseModel):
     class Config:
