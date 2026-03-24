@@ -1,6 +1,7 @@
 import streamlit as st
 from auth import AUTH_STATUS_KEY, TENANT_ID_KEY, apply_auth
 from chat_monitor import ACTIVE_CHATS_KEY, add_chat, ensure_chat_state, remove_chat
+from core.config import Settings, get_settings
 from schema_designer import (
     SCHEMAS_KEY,
     add_column,
@@ -11,6 +12,18 @@ from schema_designer import (
     update_column,
     update_schema,
 )
+
+RUNTIME_SETTINGS_KEY = "admin_runtime_settings"
+
+
+def bootstrap_runtime() -> Settings:
+    settings = get_settings()
+    st.set_page_config(
+        page_title="Telegram Chat Agent Admin",
+        layout="wide",
+    )
+    st.session_state.setdefault(RUNTIME_SETTINGS_KEY, settings)
+    return settings
 
 
 def render_auth() -> None:
@@ -27,6 +40,8 @@ def render_auth() -> None:
 
 def render_dashboard() -> None:
     st.header("Панель управления")
+    settings = st.session_state[RUNTIME_SETTINGS_KEY]
+    st.caption(f"Mode: {settings.MODE}")
     st.info("Демо-режим: доступ ограничен.")
     render_schema_designer()
     render_live_chat_monitor()
@@ -175,6 +190,7 @@ def render_live_chat_monitor() -> None:
 
 
 def main() -> None:
+    bootstrap_runtime()
     if st.session_state.get(AUTH_STATUS_KEY):
         st.sidebar.success(f"Магазин: {st.session_state.get(TENANT_ID_KEY)}")
         render_dashboard()
