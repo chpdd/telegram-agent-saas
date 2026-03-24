@@ -65,8 +65,8 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 7.1 | **30s Watchdog (Redis)** | Мониторинг таймаутов в Redis. | Добавлены `services/worker/src/core/config.py`, `services/worker/src/watchdog.py`, тест `services/worker/tests/test_watchdog.py`. Ruff: ok. Pytest: ok. Commit: 8ccead2. | 6.4 | [x] |
 | 7.2 | Inactivity Task | Проверка сессий > 2 часов. | Добавлен `services/worker/src/inactivity.py` с выборкой и закрытием неактивных чатов; в `services/api/src/models/chat.py` добавлен `updated_at`; тесты `services/worker/tests/test_inactivity.py` и `services/api/tests/test_models_chat.py` обновлены. Ruff: ok. Pytest: ok. Commit: ad80ce2. | 3.3 | [x] |
-| 7.3 | **LLM Session Reviewer** | Аналитика: Summary, Sentiment. | Добавлен `services/worker/src/session_reviewer.py` с LangChain structured output для summary/sentiment/intents; тест `services/worker/tests/test_session_reviewer.py`. Ruff: ok. Pytest: ok. Commit: TBD. | 7.2, 6.2 | [x] |
-| 7.4 | Analytics Aggregator | Сбор данных для графиков. | | 7.3 | [ ] |
+| 7.3 | **LLM Session Reviewer** | Аналитика: Summary, Sentiment. | Добавлен `services/worker/src/session_reviewer.py` с LangChain structured output для summary/sentiment/intents; тест `services/worker/tests/test_session_reviewer.py`. Ruff: ok. Pytest: ok. Commit: 442a095. | 7.2, 6.2 | [x] |
+| 7.4 | Analytics Aggregator | Сбор данных для графиков. | Добавлен `services/worker/src/analytics.py` с агрегацией метрик и chart-ready breakdowns по чатам, latency, выручке и review; тест `services/worker/tests/test_analytics.py`. Ruff: ok. Pytest: ok. Commit: TBD. | 7.3 | [x] |
 
 ## 8. Качество и Тестирование
 | ID | Task | Description | Context | Deps | Status |
