@@ -37,7 +37,7 @@
 | 3.3 | `models/chat.py` | session_id, status (enum), user_id. | Добавлен `services/api/src/models/chat.py` и тест `services/api/tests/test_models_chat.py`. Ruff: ok. Pytest: ok. Commit: a683f9a. | 3.1 | [x] |
 | 3.4 | `models/message.py` | role, content, latency_ms. | Добавлен `services/api/src/models/message.py` и тест `services/api/tests/test_models_message.py`. Ruff: ok. Pytest: ok. Commit: 526101a. | 3.3 | [x] |
 | 3.5 | `models/order.py` | items (JSONB), total_price. | Добавлен `services/api/src/models/order.py` и тест `services/api/tests/test_models_order.py`. Ruff: ok. Pytest: ok. Commit: dcb8ea9. | 3.3 | [x] |
-| 3.6 | Alembic Multi-Env | Настройка миграций. | | 3.2 | [ ] |
+| 3.6 | Alembic Multi-Env | Настройка миграций. | Добавлены `alembic.ini`, `alembic/env.py`, `alembic/script.py.mako`, `alembic/versions/.gitkeep`, `services/api/src/models/__init__.py`, тест `services/api/tests/test_alembic_setup.py`. Ruff: ok. Pytest: ok. Commit: 5bb1b44. | 3.2 | [x] |
 
 ## 4. Динамический Поиск и Каталог
 | ID | Task | Description | Context | Deps | Status |
