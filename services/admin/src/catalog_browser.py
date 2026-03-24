@@ -38,9 +38,30 @@ def list_catalog_products(
     limit: int = 100,
 ) -> list[dict[str, str | float | None]]:
     filters = normalize_catalog_filters(tenant_id, category, query, limit)
+    conditions = ["tenant_id = :tenant_id"]
+    params: dict[str, str | UUID | int] = {
+        "tenant_id": filters["tenant_id"],
+        "limit": int(filters["limit"]),
+    }
+
+    if filters["category"] is not None:
+        conditions.append("attributes ->> 'category' = :category")
+        params["category"] = str(filters["category"])
+
+    if filters["query"] is not None:
+        conditions.append(
+            """
+            (
+                lower(name) like lower('%' || :query || '%')
+                or lower(coalesce(description, '')) like lower('%' || :query || '%')
+            )
+            """
+        )
+        params["query"] = str(filters["query"])
+
     result = session.execute(
         text(
-            """
+            f"""
             select
                 id,
                 name,
@@ -49,18 +70,12 @@ def list_catalog_products(
                 attributes ->> 'measure' as measure,
                 cast(attributes ->> 'price' as double precision) as price
             from products
-            where tenant_id = :tenant_id
-              and (:category is null or attributes ->> 'category' = :category)
-              and (
-                :query is null
-                or lower(name) like lower('%' || :query || '%')
-                or lower(coalesce(description, '')) like lower('%' || :query || '%')
-              )
+            where {' and '.join(conditions)}
             order by category nulls last, name
             limit :limit
             """
         ),
-        filters,
+        params,
     )
     rows = result.mappings().all()
     return [

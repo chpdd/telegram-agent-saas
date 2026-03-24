@@ -65,3 +65,26 @@ def test_list_catalog_products_returns_flat_rows(mocker):
         }
     ]
     session.execute.assert_called_once()
+
+
+def test_list_catalog_products_omits_null_filter_params(mocker):
+    result = mocker.Mock()
+    result.mappings.return_value.all.return_value = []
+    session = mocker.Mock()
+    session.execute.return_value = result
+
+    list_catalog_products(
+        session,
+        tenant_id="11111111-1111-1111-1111-111111111111",
+        category=None,
+        query=None,
+        limit=10,
+    )
+
+    statement, params = session.execute.call_args.args
+    assert ":category" not in str(statement)
+    assert ":query" not in str(statement)
+    assert params == {
+        "tenant_id": UUID("11111111-1111-1111-1111-111111111111"),
+        "limit": 10,
+    }
