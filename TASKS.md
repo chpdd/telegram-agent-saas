@@ -55,7 +55,7 @@
 ## 6. Telegram & AI Integration
 | ID | Task | Description | Context | Deps | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 6.1 | Webhook Multi-Bot | Регистрация вебхуков. | | 3.1 | [ ] |
+| 6.1 | Webhook Multi-Bot | Регистрация вебхуков. | Добавлены `services/bot/src/core/config.py`, `services/bot/src/core/bot.py`, `services/bot/src/webhooks.py`, тест `services/bot/tests/test_webhooks.py`, env в `.env.example`, pytest-mock. Ruff: ok. Pytest: ok. Commit: f871ce1. | 3.1 | [x] |
 | 6.2 | AI Service Interface | Обертка над OpenRouter. | | 2.1 | [ ] |
 | 6.3 | Tool: `catalog_tool` | Инструментарий для LLM. | | 4.3, 6.2 | [ ] |
 | 6.4 | AI Conversation Loop | Цикл: История -> LLM -> Ответ. | | 6.3, 3.5 | [ ] |

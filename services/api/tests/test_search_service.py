@@ -2,7 +2,6 @@ import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -26,9 +25,9 @@ class FakeResult:
         return list(self._items)
 
 
-def _make_session(result):
+def _make_session(result, mocker):
     session = SimpleNamespace()
-    session.execute = AsyncMock(return_value=result)
+    session.execute = mocker.AsyncMock(return_value=result)
     return session
 
 
@@ -42,9 +41,9 @@ def _compiled_sql(statement):
 
 
 @pytest.mark.asyncio
-async def test_search_products_applies_tenant_and_filters():
+async def test_search_products_applies_tenant_and_filters(mocker):
     tenant_id = uuid4()
-    session = _make_session(FakeResult([]))
+    session = _make_session(FakeResult([]), mocker)
     filters = [
         JsonbFilter(field="color", op=FilterOperator.EQ, value="red"),
         JsonbFilter(field="size", op=FilterOperator.IN, value=["S", "M"]),
@@ -61,9 +60,9 @@ async def test_search_products_applies_tenant_and_filters():
 
 
 @pytest.mark.asyncio
-async def test_search_products_without_filters_still_scoped():
+async def test_search_products_without_filters_still_scoped(mocker):
     tenant_id = uuid4()
-    session = _make_session(FakeResult([]))
+    session = _make_session(FakeResult([]), mocker)
 
     await search_products(session, tenant_id, filters=None)
 
@@ -73,9 +72,9 @@ async def test_search_products_without_filters_still_scoped():
 
 
 @pytest.mark.asyncio
-async def test_search_products_invalid_logic_raises():
+async def test_search_products_invalid_logic_raises(mocker):
     tenant_id = uuid4()
-    session = _make_session(FakeResult([]))
+    session = _make_session(FakeResult([]), mocker)
     filters = [JsonbFilter(field="color", op=FilterOperator.EQ, value="red")]
 
     with pytest.raises(FilterError):

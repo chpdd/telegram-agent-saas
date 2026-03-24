@@ -2,7 +2,6 @@ import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
 import pytest
@@ -48,12 +47,12 @@ class FakeResult:
         return list(self._items)
 
 
-def _make_session(result):
+def _make_session(result, mocker):
     session = SimpleNamespace()
-    session.execute = AsyncMock(return_value=result)
-    session.commit = AsyncMock()
-    session.refresh = AsyncMock()
-    session.add = MagicMock()
+    session.execute = mocker.AsyncMock(return_value=result)
+    session.commit = mocker.AsyncMock()
+    session.refresh = mocker.AsyncMock()
+    session.add = mocker.MagicMock()
     return session
 
 
@@ -62,10 +61,10 @@ def _compiled_sql(statement):
 
 
 @pytest.mark.asyncio
-async def test_base_crud_get_includes_tenant_filter():
+async def test_base_crud_get_includes_tenant_filter(mocker):
     tenant_id = uuid4()
     item = DummyTenantModel(id=uuid4(), tenant_id=tenant_id, name="test")
-    session = _make_session(FakeResult([item]))
+    session = _make_session(FakeResult([item]), mocker)
 
     crud = BaseCRUD(DummyTenantModel)
     result = await crud.get(session, tenant_id, item.id)
@@ -78,10 +77,10 @@ async def test_base_crud_get_includes_tenant_filter():
 
 
 @pytest.mark.asyncio
-async def test_base_crud_list_includes_tenant_filter():
+async def test_base_crud_list_includes_tenant_filter(mocker):
     tenant_id = uuid4()
     item = DummyTenantModel(id=uuid4(), tenant_id=tenant_id, name="test")
-    session = _make_session(FakeResult([item]))
+    session = _make_session(FakeResult([item]), mocker)
 
     crud = BaseCRUD(DummyTenantModel)
     results = await crud.list(session, tenant_id, offset=0, limit=10)
@@ -94,9 +93,9 @@ async def test_base_crud_list_includes_tenant_filter():
 
 
 @pytest.mark.asyncio
-async def test_base_crud_create_sets_tenant_and_commits():
+async def test_base_crud_create_sets_tenant_and_commits(mocker):
     tenant_id = uuid4()
-    session = _make_session(FakeResult([]))
+    session = _make_session(FakeResult([]), mocker)
 
     crud = BaseCRUD(DummyTenantModel)
     result = await crud.create(session, tenant_id, {"name": "new"})
@@ -109,11 +108,11 @@ async def test_base_crud_create_sets_tenant_and_commits():
 
 
 @pytest.mark.asyncio
-async def test_base_crud_update_ignores_tenant_id_changes():
+async def test_base_crud_update_ignores_tenant_id_changes(mocker):
     tenant_id = uuid4()
     other_tenant = uuid4()
     item = DummyTenantModel(id=uuid4(), tenant_id=tenant_id, name="updated")
-    session = _make_session(FakeResult([item]))
+    session = _make_session(FakeResult([item]), mocker)
 
     crud = BaseCRUD(DummyTenantModel)
     result = await crud.update(session, tenant_id, item.id, {"name": "updated", "tenant_id": other_tenant})
@@ -128,10 +127,10 @@ async def test_base_crud_update_ignores_tenant_id_changes():
 
 
 @pytest.mark.asyncio
-async def test_base_crud_delete_includes_tenant_filter():
+async def test_base_crud_delete_includes_tenant_filter(mocker):
     tenant_id = uuid4()
     item = DummyTenantModel(id=uuid4(), tenant_id=tenant_id, name="deleted")
-    session = _make_session(FakeResult([item]))
+    session = _make_session(FakeResult([item]), mocker)
 
     crud = BaseCRUD(DummyTenantModel)
     result = await crud.delete(session, tenant_id, item.id)
@@ -144,9 +143,9 @@ async def test_base_crud_delete_includes_tenant_filter():
 
 
 @pytest.mark.asyncio
-async def test_schema_crud_uses_pydantic_models():
+async def test_schema_crud_uses_pydantic_models(mocker):
     tenant_id = uuid4()
-    session = _make_session(FakeResult([]))
+    session = _make_session(FakeResult([]), mocker)
 
     crud = SchemaCRUD[DummyTenantModel, CreateSchema, UpdateSchema](DummyTenantModel)
     result = await crud.create(session, tenant_id, CreateSchema(name="from-schema"))
