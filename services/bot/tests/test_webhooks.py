@@ -48,6 +48,14 @@ def test_build_webhook_url():
     assert bot_module.build_webhook_url("tenant-1") == "https://example.com/webhooks/tenant-1"
 
 
+def test_create_bot_uses_default_bot_properties():
+    bot_module, _ = _load_bot_modules()
+
+    bot = bot_module.create_bot("123456:test-token")
+
+    assert bot.default.parse_mode == "HTML"
+
+
 @pytest.mark.asyncio
 async def test_register_webhook_calls_set_webhook(mocker):
     _, webhooks_module = _load_bot_modules()
