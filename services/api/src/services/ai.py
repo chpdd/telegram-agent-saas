@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from core.config import settings
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 
@@ -11,7 +11,10 @@ class OpenRouterError(ValueError):
     pass
 
 
-def _to_message(item: dict[str, Any]):
+_MEMORY: dict[str, list[Any]] = {}
+
+
+def _to_message(item: dict[str, Any]) -> Any:
     role = item.get("role")
     content = item.get("content", "")
     if role == "system":
@@ -21,6 +24,14 @@ def _to_message(item: dict[str, Any]):
     if role == "assistant":
         return AIMessage(content=content)
     raise OpenRouterError(f"Unsupported role: {role}")
+
+
+def get_conversation_history(conversation_id: str) -> list[Any]:
+    return list(_MEMORY.get(conversation_id, []))
+
+
+def reset_conversation_history(conversation_id: str) -> None:
+    _MEMORY.pop(conversation_id, None)
 
 
 def _build_model(
@@ -44,6 +55,7 @@ async def chat_completion(
     *,
     messages: list[dict[str, Any]],
     model: str,
+    conversation_id: str | None = None,
     temperature: float | None = None,
     max_tokens: int | None = None,
     extra: dict[str, Any] | None = None,
@@ -55,4 +67,17 @@ async def chat_completion(
         extra=extra,
     )
     formatted = [_to_message(item) for item in messages]
-    return await model_client.ainvoke(formatted)
+    if conversation_id:
+        history = _MEMORY.setdefault(conversation_id, [])
+        request_messages = [*history, *formatted]
+    else:
+        history = None
+        request_messages = formatted
+
+    response = await model_client.ainvoke(request_messages)
+
+    if history is not None:
+        history.extend(formatted)
+        history.append(response)
+
+    return response
