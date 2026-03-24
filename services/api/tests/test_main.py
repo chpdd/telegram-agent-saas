@@ -2,7 +2,7 @@ import os
 import sys
 from pathlib import Path
 
-os.environ.setdefault("OPENROUTER_API_KEY", "test")
+os.environ.setdefault("LLM_API_KEY", "test")
 
 API_SRC = str(Path(__file__).parents[1] / "src")
 if API_SRC in sys.path:
@@ -33,4 +33,4 @@ def test_create_app_stores_settings_on_state():
     app = create_app()
 
     with TestClient(app):
-        assert app.state.settings.OPENROUTER_API_KEY == os.environ["OPENROUTER_API_KEY"]
+        assert app.state.settings.LLM_API_KEY == os.environ["LLM_API_KEY"]

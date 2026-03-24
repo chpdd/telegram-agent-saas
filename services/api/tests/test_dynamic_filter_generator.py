@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.dialects import postgresql
 
-os.environ.setdefault("OPENROUTER_API_KEY", "test")
+os.environ.setdefault("LLM_API_KEY", "test")
 sys.path.append(str(Path(__file__).parents[1] / "src"))
 
 from core.filters import FilterError, FilterOperator, JsonbFilter, build_jsonb_filters  # noqa: E402

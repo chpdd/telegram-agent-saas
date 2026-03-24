@@ -6,7 +6,7 @@ from uuid import uuid4
 
 import pytest
 
-os.environ.setdefault("OPENROUTER_API_KEY", "test")
+os.environ.setdefault("LLM_API_KEY", "test")
 sys.path.append(str(Path(__file__).parents[1] / "src"))
 
 from core.filters import FilterOperator  # noqa: E402

@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-os.environ.setdefault("OPENROUTER_API_KEY", "test-key")
-os.environ.setdefault("OPENROUTER_BASE_URL", "https://openrouter.example")
+os.environ.setdefault("LLM_API_KEY", "test-key")
+os.environ.setdefault("LLM_BASE_URL", "https://openrouter.example")
 
 API_SRC = str(Path(__file__).parents[1] / "src")
 if API_SRC in sys.path:

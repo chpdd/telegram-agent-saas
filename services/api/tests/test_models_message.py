@@ -4,7 +4,7 @@ from pathlib import Path
 
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
-os.environ.setdefault("OPENROUTER_API_KEY", "test")
+os.environ.setdefault("LLM_API_KEY", "test")
 sys.path.append(str(Path(__file__).parents[1] / "src"))
 
 from models.message import Message, MessageRole  # noqa: E402

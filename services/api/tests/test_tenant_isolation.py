@@ -8,7 +8,7 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-os.environ.setdefault("OPENROUTER_API_KEY", "test")
+os.environ.setdefault("LLM_API_KEY", "test")
 sys.path.append(str(Path(__file__).parents[1] / "src"))
 
 from core.database import Base  # noqa: E402

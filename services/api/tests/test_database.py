@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-os.environ.setdefault("OPENROUTER_API_KEY", "test")
+os.environ.setdefault("LLM_API_KEY", "test")
 sys.path.append(str(Path(__file__).parents[1] / "src"))
 
 from core.database import engine, get_session  # noqa: E402

@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-os.environ.setdefault("OPENROUTER_API_KEY", "test")
+os.environ.setdefault("LLM_API_KEY", "test")
 API_SRC = str(Path(__file__).parents[1] / "src")
 if API_SRC in sys.path:
     sys.path.remove(API_SRC)

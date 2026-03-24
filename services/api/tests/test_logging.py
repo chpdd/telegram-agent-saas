@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-os.environ.setdefault("OPENROUTER_API_KEY", "test")
+os.environ.setdefault("LLM_API_KEY", "test")
 sys.path.append(str(Path(__file__).parents[1] / "src"))
 
 from core.logging import JsonFormatter  # noqa: E402

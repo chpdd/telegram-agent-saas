@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.dialects import postgresql
 
-os.environ.setdefault("OPENROUTER_API_KEY", "test")
+os.environ.setdefault("LLM_API_KEY", "test")
 sys.path.append(str(Path(__file__).parents[1] / "src"))
 
 from core.filters import FilterError, FilterOperator, JsonbFilter  # noqa: E402

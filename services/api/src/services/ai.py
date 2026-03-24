@@ -50,8 +50,8 @@ def _build_model(
         model=model,
         temperature=temperature,
         max_tokens=max_tokens,
-        api_key=settings.OPENROUTER_API_KEY,
-        base_url=settings.OPENROUTER_BASE_URL,
+        api_key=settings.LLM_API_KEY,
+        base_url=settings.LLM_BASE_URL,
         model_kwargs=extra or {},
     )
 
