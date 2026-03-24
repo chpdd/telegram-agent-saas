@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     )
     WATCHDOG_TIMEOUT_SECONDS: int = 30
     WATCHDOG_KEY_PREFIX: str = "watchdog"
+    WORKER_POLL_INTERVAL_SECONDS: float = 5.0
+    INACTIVITY_TIMEOUT_SECONDS: int = 7200
+    SESSION_REVIEW_ENABLED: bool = True
 
     @property
     def redis_url(self) -> str:
