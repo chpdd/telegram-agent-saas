@@ -7,11 +7,16 @@ import pytest
 os.environ.setdefault("OPENROUTER_API_KEY", "test-key")
 os.environ.setdefault("OPENROUTER_BASE_URL", "https://openrouter.example")
 
-sys.path.append(str(Path(__file__).parents[1] / "src"))
+API_SRC = str(Path(__file__).parents[1] / "src")
+if API_SRC in sys.path:
+    sys.path.remove(API_SRC)
+sys.path.insert(0, API_SRC)
 
+from fakes import FakeChatModel, make_ai_message  # noqa: E402
 from langchain.messages import AIMessage, HumanMessage, SystemMessage  # noqa: E402
 from services.ai import (  # noqa: E402
     OpenRouterError,
+    build_chat_model,
     chat_completion,
     get_conversation_history,
     reset_conversation_history,
@@ -20,8 +25,7 @@ from services.ai import (  # noqa: E402
 
 @pytest.mark.asyncio
 async def test_chat_completion_builds_payload(mocker):
-    mock_model = mocker.MagicMock()
-    mock_model.ainvoke = mocker.AsyncMock(return_value=AIMessage(content="ok"))
+    mock_model = FakeChatModel([make_ai_message("ok")])
     mocker.patch("services.ai.ChatOpenAI", return_value=mock_model)
 
     result = await chat_completion(
@@ -33,13 +37,13 @@ async def test_chat_completion_builds_payload(mocker):
     )
 
     assert result.content == "ok"
-    mock_model.ainvoke.assert_awaited_once()
+    assert len(mock_model.calls) == 1
+    assert isinstance(mock_model.calls[0][0], HumanMessage)
 
 
 @pytest.mark.asyncio
 async def test_chat_completion_rejects_unknown_role(mocker):
-    mock_model = mocker.MagicMock()
-    mock_model.ainvoke = mocker.AsyncMock()
+    mock_model = FakeChatModel([])
     mocker.patch("services.ai.ChatOpenAI", return_value=mock_model)
 
     with pytest.raises(OpenRouterError):
@@ -51,11 +55,10 @@ async def test_chat_completion_uses_memory_for_conversation_context(mocker):
     conversation_id = "dialog-1"
     reset_conversation_history(conversation_id)
 
-    mock_model = mocker.MagicMock()
-    mock_model.ainvoke = mocker.AsyncMock(
-        side_effect=[
-            AIMessage(content="first reply"),
-            AIMessage(content="second reply"),
+    mock_model = FakeChatModel(
+        [
+            make_ai_message("first reply"),
+            make_ai_message("second reply"),
         ]
     )
     mocker.patch("services.ai.ChatOpenAI", return_value=mock_model)
@@ -74,8 +77,8 @@ async def test_chat_completion_uses_memory_for_conversation_context(mocker):
         conversation_id=conversation_id,
     )
 
-    first_call_messages = mock_model.ainvoke.await_args_list[0].args[0]
-    second_call_messages = mock_model.ainvoke.await_args_list[1].args[0]
+    first_call_messages = mock_model.calls[0]
+    second_call_messages = mock_model.calls[1]
     history = get_conversation_history(conversation_id)
 
     assert isinstance(first_call_messages[0], SystemMessage)
@@ -86,3 +89,15 @@ async def test_chat_completion_uses_memory_for_conversation_context(mocker):
     assert len(history) == 5
 
     reset_conversation_history(conversation_id)
+
+
+def test_build_chat_model_binds_tools(mocker):
+    tool = object()
+    fake_model = FakeChatModel([AIMessage(content="unused")])
+    constructor = mocker.patch("services.ai.ChatOpenAI", return_value=fake_model)
+
+    result = build_chat_model(model="gpt-4o", tools=[tool])
+
+    assert result is fake_model
+    constructor.assert_called_once()
+    assert fake_model.bound_tools == [tool]
