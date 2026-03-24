@@ -48,7 +48,7 @@
 ## 5. Dashboard (Streamlit Management)
 | ID | Task | Description | Context | Deps | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 5.1 | UI: Auth Mock | Вход по "ID магазина". | | 3.1 | [ ] |
+| 5.1 | UI: Auth Mock | Вход по "ID магазина". | Добавлены `services/admin/src/main.py`, `services/admin/src/auth.py`, тест `services/admin/tests/test_auth.py`. Ruff: ok. Pytest: ok. Commit: 183c22e. | 3.1 | [x] |
 | 5.2 | UI: Schema Designer | CRUD для `catalog_schemas`. | | 3.2 | [ ] |
 | 5.3 | UI: Catalog Upload | Загрузка CSV/Excel. | | 4.2 | [ ] |
 | 5.4 | UI: Live Chat Monitor | Список активных чатов. | | 3.3 | [ ] |
