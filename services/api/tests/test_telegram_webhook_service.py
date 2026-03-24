@@ -1,7 +1,7 @@
 import os
 import sys
-from uuid import UUID, uuid4
 from pathlib import Path
+from uuid import UUID, uuid4
 
 import pytest
 from openai import RateLimitError
@@ -48,10 +48,22 @@ def test_build_chat_session_id_uses_tenant_and_telegram_chat():
 
 @pytest.mark.asyncio
 async def test_handle_telegram_webhook_returns_fallback_on_llm_rate_limit(mocker):
-    tenant = mocker.Mock(bot_token="123456:test-token", system_prompt="assistant")
+    class TenantStub:
+        def __init__(self) -> None:
+            self._expired = False
+            self._bot_token = "123456:test-token"
+            self.system_prompt = "assistant"
+
+        @property
+        def bot_token(self) -> str:
+            if self._expired:
+                raise RuntimeError("attribute expired")
+            return self._bot_token
+
+    tenant = TenantStub()
     chat = mocker.Mock(id=uuid4(), session_id="telegram:tenant-1:12345")
     session = mocker.AsyncMock()
-    session.rollback = mocker.AsyncMock()
+    session.rollback = mocker.AsyncMock(side_effect=lambda: setattr(tenant, "_expired", True))
 
     mocker.patch("services.telegram_webhook._load_tenant", new=mocker.AsyncMock(return_value=tenant))
     mocker.patch("services.telegram_webhook._get_or_create_chat", new=mocker.AsyncMock(return_value=chat))
@@ -88,3 +100,4 @@ async def test_handle_telegram_webhook_returns_fallback_on_llm_rate_limit(mocker
     bot_instance.send_message.assert_awaited_once_with(chat_id="12345", text=LLM_TEMPORARY_FAILURE_MESSAGE)
     bot_instance.session.close.assert_awaited_once()
     bot_class.assert_called_once()
+    assert bot_class.call_args.kwargs["token"] == "123456:test-token"

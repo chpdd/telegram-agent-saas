@@ -102,6 +102,8 @@ async def handle_telegram_webhook(
         return {"status": "ignored", "reason": "unsupported_update"}
 
     tenant = await _load_tenant(session, tenant_id)
+    tenant_bot_token = tenant.bot_token
+    tenant_system_prompt = tenant.system_prompt
     chat = await _get_or_create_chat(
         session,
         tenant_id=tenant_id,
@@ -117,7 +119,7 @@ async def handle_telegram_webhook(
             conversation_id=chat.session_id,
             user_content=context.text,
             model=settings.DEFAULT_LLM_MODEL,
-            system_prompt=tenant.system_prompt,
+            system_prompt=tenant_system_prompt,
         )
         reply_text = result["content"]
         response_status = "processed"
@@ -129,7 +131,7 @@ async def handle_telegram_webhook(
         tool_calls = []
 
     bot = Bot(
-        token=tenant.bot_token,
+        token=tenant_bot_token,
         default=DefaultBotProperties(parse_mode="HTML"),
     )
     try:
