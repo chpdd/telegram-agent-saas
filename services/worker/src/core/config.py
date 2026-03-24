@@ -6,6 +6,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     DATABASE_URL: str | None = Field(default=None, validation_alias=AliasChoices("DATABASE_URL"))
+    DB_NAME: str = "telegram_ai_agent"
+    DB_USER: str = "user"
+    DB_PASS: str = "password"
+    DB_PORT: int = 5432
+    DB_HOST: str = "db"
     REDIS_URL: str | None = Field(default=None, validation_alias=AliasChoices("REDIS_URL"))
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
@@ -22,6 +27,12 @@ class Settings(BaseSettings):
     WORKER_POLL_INTERVAL_SECONDS: float = 5.0
     INACTIVITY_TIMEOUT_SECONDS: int = 7200
     SESSION_REVIEW_ENABLED: bool = True
+
+    @property
+    def db_url(self) -> str:
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
+        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     @property
     def redis_url(self) -> str:

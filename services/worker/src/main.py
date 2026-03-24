@@ -2,20 +2,17 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import sys
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from importlib import import_module
-from pathlib import Path
 from typing import Any
 
 from core.config import settings
+from core.database import async_session_maker
 from inactivity import close_inactive_chats
+from models.chat import Chat
 from redis.asyncio import Redis
 from session_reviewer import review_session
 from watchdog import RedisWatchdog
-
-API_SRC = str(Path(__file__).parents[2] / "api" / "src")
 
 logger = logging.getLogger(__name__)
 
@@ -51,20 +48,7 @@ async def default_review_callback(expired_entries: list[dict[str, Any]]) -> list
         results.append(result)
     return results
 
-
-def _import_api_module(module_name: str) -> Any:
-    conflicting_modules = ["core", "core.config", "core.database", "models", "models.chat"]
-    for name in conflicting_modules:
-        sys.modules.pop(name, None)
-    if API_SRC in sys.path:
-        sys.path.remove(API_SRC)
-    sys.path.insert(0, API_SRC)
-    return import_module(module_name)
-
-
 def build_worker_runtime() -> WorkerRuntime:
-    api_database = _import_api_module("core.database")
-    api_chat = _import_api_module("models.chat")
     redis = Redis.from_url(settings.redis_url)
     watchdog = RedisWatchdog(
         redis,
@@ -73,8 +57,8 @@ def build_worker_runtime() -> WorkerRuntime:
     )
     return WorkerRuntime(
         watchdog=watchdog,
-        session_factory=api_database.async_session_maker,
-        chat_model=api_chat.Chat,
+        session_factory=async_session_maker,
+        chat_model=Chat,
         inactivity_timeout_seconds=settings.INACTIVITY_TIMEOUT_SECONDS,
         review_enabled=settings.SESSION_REVIEW_ENABLED,
         review_callback=None,

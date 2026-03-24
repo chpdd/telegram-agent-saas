@@ -34,7 +34,9 @@ services:
   api:
     build: .
     container_name: tca_api
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: >
+      sh -lc "cd /app/services/api/src &&
+      uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - .:/app
     environment:
@@ -42,6 +44,8 @@ services:
       REDIS_URL: redis://redis:6379/0
       LLM_API_KEY: ${LLM_API_KEY}
       LLM_BASE_URL: ${LLM_BASE_URL:-https://openrouter.ai/api/v1}
+      BOT_WEBHOOK_SECRET: ${BOT_WEBHOOK_SECRET:-change_me}
+      MODE: ${MODE:-DEV}
     ports:
       - "8000:8000"
     healthcheck:
@@ -66,15 +70,62 @@ services:
       - db_net
       - redis_net
 
-  dashboard:
+  worker:
     build: .
-    container_name: tca_dashboard
-    command: streamlit run app/dashboard/admin_panel.py --server.port 8501 --server.address 0.0.0.0
+    container_name: tca_worker
+    command: >
+      sh -lc "cd /app/services/worker/src &&
+      uv run python main.py"
     volumes:
       - .:/app
     environment:
       DATABASE_URL: postgresql+asyncpg://user:password@db:5432/telegram_ai_agent
       REDIS_URL: redis://redis:6379/0
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://openrouter.ai/api/v1}
+      MODE: ${MODE:-DEV}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - db_net
+      - redis_net
+
+  bot:
+    build: .
+    container_name: tca_bot
+    command: >
+      sh -lc "cd /app/services/bot/src &&
+      uv run python main.py"
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user:password@db:5432/telegram_ai_agent
+      BOT_WEBHOOK_BASE_URL: ${BOT_WEBHOOK_BASE_URL:-http://api:8000}
+      BOT_WEBHOOK_SECRET: ${BOT_WEBHOOK_SECRET:-change_me}
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    networks:
+      - db_net
+      - edge
+
+  admin:
+    build: .
+    container_name: tca_admin
+    command: >
+      sh -lc "cd /app/services/admin/src &&
+      uv run streamlit run main.py --server.port 8501 --server.address 0.0.0.0"
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user:password@db:5432/telegram_ai_agent
+      REDIS_URL: redis://redis:6379/0
+      MODE: ${MODE:-DEV}
     ports:
       - "8501:8501"
     healthcheck:

@@ -13,6 +13,35 @@ sys.path.insert(0, WORKER_SRC)
 
 def _load_worker_main():
     module_name = "worker_test_main_module"
+    for dependency_name in [
+        "core",
+        "core.config",
+        "core.database",
+        "models",
+        "models.chat",
+        "main",
+        module_name,
+    ]:
+        sys.modules.pop(dependency_name, None)
+
+    config_spec = spec_from_file_location("core.config", Path(WORKER_SRC) / "core" / "config.py")
+    assert config_spec is not None and config_spec.loader is not None
+    config_module = module_from_spec(config_spec)
+    sys.modules["core.config"] = config_module
+    config_spec.loader.exec_module(config_module)
+
+    database_spec = spec_from_file_location("core.database", Path(WORKER_SRC) / "core" / "database.py")
+    assert database_spec is not None and database_spec.loader is not None
+    database_module = module_from_spec(database_spec)
+    sys.modules["core.database"] = database_module
+    database_spec.loader.exec_module(database_module)
+
+    chat_spec = spec_from_file_location("models.chat", Path(WORKER_SRC) / "models" / "chat.py")
+    assert chat_spec is not None and chat_spec.loader is not None
+    chat_module = module_from_spec(chat_spec)
+    sys.modules["models.chat"] = chat_module
+    chat_spec.loader.exec_module(chat_module)
+
     sys.modules.pop(module_name, None)
     spec = spec_from_file_location(module_name, Path(WORKER_SRC) / "main.py")
     assert spec is not None and spec.loader is not None
@@ -49,8 +78,6 @@ def test_build_worker_runtime_uses_configured_dependencies(mocker):
     worker_main = _load_worker_main()
     redis_instance = object()
     watchdog_instance = object()
-    session_factory = object()
-    chat_model = object()
     mocker.patch.object(worker_main.settings, "REDIS_URL", "redis://redis:6379/0")
     mocker.patch.object(worker_main.settings, "WATCHDOG_TIMEOUT_SECONDS", 45)
     mocker.patch.object(worker_main.settings, "WATCHDOG_KEY_PREFIX", "runtime")
@@ -58,20 +85,12 @@ def test_build_worker_runtime_uses_configured_dependencies(mocker):
     mocker.patch.object(worker_main.settings, "SESSION_REVIEW_ENABLED", False)
     mocker.patch("redis.asyncio.Redis.from_url", return_value=redis_instance)
     mocker.patch.object(worker_main, "RedisWatchdog", return_value=watchdog_instance)
-    mocker.patch.object(
-        worker_main,
-        "_import_api_module",
-        side_effect=[
-            SimpleNamespace(async_session_maker=session_factory),
-            SimpleNamespace(Chat=chat_model),
-        ],
-    )
 
     runtime = worker_main.build_worker_runtime()
 
     assert runtime.watchdog is watchdog_instance
-    assert runtime.session_factory is session_factory
-    assert runtime.chat_model is chat_model
+    assert runtime.session_factory is worker_main.async_session_maker
+    assert runtime.chat_model is worker_main.Chat
     assert runtime.inactivity_timeout_seconds == 900
     assert runtime.review_enabled is False
 
