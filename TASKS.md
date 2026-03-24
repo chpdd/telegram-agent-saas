@@ -50,7 +50,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 5.1 | UI: Auth Mock | Вход по "ID магазина". | Добавлены `services/admin/src/main.py`, `services/admin/src/auth.py`, тест `services/admin/tests/test_auth.py`. Ruff: ok. Pytest: ok. Commit: 183c22e. | 3.1 | [x] |
 | 5.2 | UI: Schema Designer | CRUD для `catalog_schemas`. | Добавлены колонки (key/label/description) и CRUD в `services/admin/src/schema_designer.py`, обновлен `services/admin/src/main.py`, тест `services/admin/tests/test_schema_designer.py`. Ruff: ok. Pytest: ok. Commit: 183f0b6. | 3.2 | [x] |
-| 5.4 | UI: Live Chat Monitor | Список активных чатов. | | 3.3 | [ ] |
+| 5.4 | UI: Live Chat Monitor | Список активных чатов. | Добавлены `services/admin/src/chat_monitor.py`, обновлен `services/admin/src/main.py`, тест `services/admin/tests/test_chat_monitor.py`. Ruff: ok. Pytest: ok. Commit: a9a86cf. | 3.3 | [x] |
 
 ## 6. Telegram & AI Integration
 | ID | Task | Description | Context | Deps | Status |

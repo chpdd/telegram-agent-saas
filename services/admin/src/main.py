@@ -1,5 +1,6 @@
 import streamlit as st
 from auth import AUTH_STATUS_KEY, TENANT_ID_KEY, apply_auth
+from chat_monitor import ACTIVE_CHATS_KEY, add_chat, ensure_chat_state, remove_chat
 from schema_designer import (
     SCHEMAS_KEY,
     add_column,
@@ -28,6 +29,7 @@ def render_dashboard() -> None:
     st.header("Панель управления")
     st.info("Демо-режим: доступ ограничен.")
     render_schema_designer()
+    render_live_chat_monitor()
 
 
 def render_schema_designer() -> None:
@@ -136,6 +138,40 @@ def render_schema_designer() -> None:
                 st.warning("Колонка удалена")
             except (ValueError, IndexError) as exc:
                 st.error(str(exc))
+
+
+def render_live_chat_monitor() -> None:
+    st.subheader("Активные чаты")
+    ensure_chat_state(st.session_state)
+    chats = st.session_state[ACTIVE_CHATS_KEY]
+    if not chats:
+        st.info("Активных чатов нет.")
+
+    for idx, chat in enumerate(chats):
+        cols = st.columns([3, 3, 2, 2])
+        cols[0].write(chat["session_id"])
+        cols[1].write(chat["user_id"])
+        cols[2].write(chat["status"])
+        if cols[3].button("Удалить", key=f"chat-remove-{idx}"):
+            try:
+                remove_chat(st.session_state, idx)
+                st.success("Чат удалён")
+            except IndexError as exc:
+                st.error(str(exc))
+            return
+
+    st.divider()
+    st.subheader("Добавить чат (мок)")
+    session_id = st.text_input("Session ID", key="chat_session_id")
+    user_id = st.text_input("User ID", key="chat_user_id")
+    status = st.selectbox("Статус", ["open", "closed"], index=0)
+
+    if st.button("Добавить чат"):
+        try:
+            add_chat(st.session_state, session_id, user_id, status)
+            st.success("Чат добавлен")
+        except ValueError as exc:
+            st.error(str(exc))
 
 
 def main() -> None:
