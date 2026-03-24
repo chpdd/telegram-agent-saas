@@ -33,7 +33,7 @@
 | ID | Task | Description | Context | Deps | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 3.1 | `models/tenant.py` | UUID PK, bot_token, system_prompt. | Добавлен `services/api/src/models/tenant.py` + тест `services/api/tests/test_models_tenant.py`. Ruff: ok. Pytest: ok. Commit: 04102a0. | 2.2 | [x] |
-| 3.2 | `models/product.py` | Базовые поля + JSONB attributes + FTS. | | 3.1 | [ ] |
+| 3.2 | `models/product.py` | Базовые поля + JSONB attributes + FTS. | Добавлен `services/api/src/models/product.py` (JSONB + TSVECTOR) и тест `services/api/tests/test_models_product.py`. Ruff: ok. Pytest: ok. Commit: 3d16685. | 3.1 | [x] |
 | 3.3 | `models/chat.py` | session_id, status (enum), user_id. | | 3.1 | [ ] |
 | 3.4 | `models/message.py` | role, content, latency_ms. | | 3.3 | [ ] |
 | 3.5 | `models/order.py` | items (JSONB), total_price. | | 3.3 | [ ] |
