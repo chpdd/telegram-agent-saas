@@ -25,7 +25,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 2.1 | `core/config.py` | Pydantic Settings с валидацией. | Создан базовый конфиг в api сервисе. | 1.2 | [/] |
 | 2.2 | `core/database.py` | SQLAlchemy engine + Base class. | Реализованы `Base`, `engine`, `async_session_maker`, `get_session`; тест `services/api/tests/test_database.py`. Ruff: ok. Pytest: ok. Commit: f6e47a1. | 1.2 | [x] |
-| 2.3 | **Tenant Isolation Utility** | Механизм принудительного `tenant_id`. | | 2.2 | [ ] |
+| 2.3 | **Tenant Isolation Utility** | Механизм принудительного `tenant_id`. | Добавлен `services/api/src/core/tenancy.py` с `apply_tenant_filter`; тесты `services/api/tests/test_tenant_isolation.py`. Ruff: ok. Pytest: ok. Commit: 7e1df83. | 2.2 | [x] |
 | 2.4 | `crud/base.py` | `BaseCRUD` и `SchemaCRUD`. | | 2.2 | [ ] |
 | 2.5 | `core/logging.py` | JSON-логирование. | | 1.2 | [ ] |
 
