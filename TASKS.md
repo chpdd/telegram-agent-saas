@@ -82,3 +82,19 @@
 | 9.1 | UV Docker Layering | Оптимизация Dockerfile. | Добавлены `Dockerfile` и `.dockerignore`: двухстадийная сборка через `uv`, кэшируемая установка зависимостей по `pyproject.toml`/`uv.lock`, venv вынесен в `/opt/venv` для совместимости с bind mount. Проверки: `docker compose config`, `uv run pytest`. Commit: 9d129b9. | 1.2 | [x] |
 | 9.2 | Network Isolation | Настройка сетей Docker. | Обновлен `docker-compose.yml`: сервисы разведены по сетям `edge`, `db_net`, `redis_net`, внутренние сети БД и Redis отмечены как `internal`. Проверки: `docker compose config`, `uv run pytest`. Commit: a3ad488. | - | [x] |
 | 9.3 | Healthchecks | Проверки готовности сервисов. | Обновлен `docker-compose.yml`: добавлены healthchecks для `redis`, `api`, `dashboard`; `api` теперь зависит от `redis` по `service_healthy`. Проверки: `docker compose config`, `uv run pytest`. Commit: TBD. | - | [x] |
+
+## 10. Runtime Stabilization
+| ID | Task | Description | Context | Deps | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 10.1 | API App Bootstrap | Создать реальный `FastAPI` app в `services/api/src/main.py`: lifespan, `/health`, базовый router registry. | Добавлен `FastAPI` bootstrap в `services/api/src/main.py`: `create_app`, lifespan, `/health`, базовый router registry, инициализация logging и `app.state.settings`; добавлен тест `services/api/tests/test_main.py`. Ruff: ok. Pytest: ok. Commit: TBD. | 2.1, 2.2 | [x] |
+| 10.2 | API Config Alignment | Привести env-названия и settings к единому runtime-контракту (`DATABASE_URL`, `OPENROUTER_*`, Redis, webhook settings). | Нужно синхронизировать `docker-compose.yml`, `.env.example`, `core/config.py` разных сервисов. | 10.1 | [ ] |
+| 10.3 | API Routers: Health & Search | Добавить реальные FastAPI routers: `/health`, `/catalog/search`, валидацию входа и DI для async session. | Минимально необходимый HTTP слой для запуска API и smoke-проверок. | 10.1, 10.2, 4.3 | [ ] |
+| 10.4 | API Router: Conversation | Добавить endpoint для диалога (`/conversations/{id}/messages`) поверх `run_conversation_turn`. | Нужен рабочий HTTP-вход в LLM/tool loop. | 10.3, 6.4 | [ ] |
+| 10.5 | Worker Entrypoint | Создать `services/worker/src/main.py` с async loop: watchdog polling, inactivity close, session review pipeline. | Сейчас у worker есть только библиотеки без точки запуска. | 7.1, 7.2, 7.3, 7.4 | [ ] |
+| 10.6 | Bot Runtime Bootstrap | Добавить entrypoint для bot-сервиса: загрузка tenant bot configs, регистрация webhook/multi-bot startup. | Сейчас есть только `webhooks.py`, но нет процесса bot runtime. | 6.1, 10.2 | [ ] |
+| 10.7 | Webhook Intake API | Добавить webhook endpoint в API для Telegram update intake и проксирования в bot logic. | Без этого multi-bot схема не замыкается в рабочий контур. | 10.4, 10.6 | [ ] |
+| 10.8 | Admin Runtime Wiring | Привести Streamlit dashboard к реальному запуску из `services/admin/src/main.py` и runtime env. | Compose сейчас ссылается на старый путь `app/dashboard/admin_panel.py`. | 10.2 | [ ] |
+| 10.9 | Compose Runtime Fix | Обновить `docker-compose.yml` под реальные entrypoints и команды запуска для `api`, `worker`, `bot`, `admin`. | После bootstrap-задач нужно связать всё в один рабочий стек. | 10.5, 10.6, 10.7, 10.8 | [ ] |
+| 10.10 | DB Migration Bootstrap | Создать первую рабочую Alembic migration и команду применения в runtime startup docs. | Сейчас Alembic scaffold есть, но нет гарантированного начального schema state. | 3.6, 10.9 | [ ] |
+| 10.11 | Runtime Smoke Tests | Добавить smoke/integration тесты на запуск FastAPI app, worker loop bootstrap и compose config. | Нужно доказать, что сервисы хотя бы стартуют и wiring не сломан. | 10.3, 10.5, 10.9 | [ ] |
+| 10.12 | Launch Docs | Обновить `README.md` командами запуска, переменными окружения и минимальным сценарием локальной проверки. | После runtime stabilization проект должен быть воспроизводимо запускаем локально. | 10.9, 10.10, 10.11 | [ ] |
