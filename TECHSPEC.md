@@ -13,12 +13,12 @@
 - **Testing:** **pytest** + pytest-asyncio.
 - **Linting/Formatting:** **Ruff**.
 - **Database:** PostgreSQL 16.
-- **Search:** PostgreSQL Full Text Search (индексы `tsvector`) + JSONB (динамические атрибуты).
+- **Search:** JSONB (динамические атрибуты) с фильтрацией по атрибутам.
 - **LLM:** OpenRouter (GPT-4o / Claude 3.5 Sonnet).
 
 ## 3. Модель данных (SQLAlchemy 2.0 Mapped)
 - `Tenant`: Настройки магазина (`bot_token`, `system_prompt`, `catalog_schema`).
-- `Product`: Каталог товаров (FTS индексы по `name` и `description`).
+- `Product`: Каталог товаров с динамическими атрибутами (JSONB).
 - `ChatSession`: Управление сессиями (аналитика запускается после закрытия сессии).
 - `Message`: История для контекста.
 - `Order`: Предзаказы для сборщиков.

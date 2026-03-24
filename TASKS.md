@@ -33,7 +33,7 @@
 | ID | Task | Description | Context | Deps | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 3.1 | `models/tenant.py` | UUID PK, bot_token, system_prompt. | Добавлен `services/api/src/models/tenant.py` + тест `services/api/tests/test_models_tenant.py`. Ruff: ok. Pytest: ok. Commit: 04102a0. | 2.2 | [x] |
-| 3.2 | `models/product.py` | Базовые поля + JSONB attributes + FTS. | Добавлен `services/api/src/models/product.py` (JSONB + TSVECTOR) и тест `services/api/tests/test_models_product.py`. Ruff: ok. Pytest: ok. Commit: 3d16685. | 3.1 | [x] |
+| 3.2 | `models/product.py` | Базовые поля + JSONB attributes. | Добавлен `services/api/src/models/product.py` (JSONB). Удален `search_vector` и FTS-индекс. Тест `services/api/tests/test_models_product.py` обновлен. Ruff: ok. Pytest: ok. Commit: ce1b7c9. | 3.1 | [x] |
 | 3.3 | `models/chat.py` | session_id, status (enum), user_id. | Добавлен `services/api/src/models/chat.py` и тест `services/api/tests/test_models_chat.py`. Ruff: ok. Pytest: ok. Commit: a683f9a. | 3.1 | [x] |
 | 3.4 | `models/message.py` | role, content, latency_ms. | Добавлен `services/api/src/models/message.py` и тест `services/api/tests/test_models_message.py`. Ruff: ok. Pytest: ok. Commit: 526101a. | 3.3 | [x] |
 | 3.5 | `models/order.py` | items (JSONB), total_price. | Добавлен `services/api/src/models/order.py` и тест `services/api/tests/test_models_order.py`. Ruff: ok. Pytest: ok. Commit: dcb8ea9. | 3.3 | [x] |
@@ -43,7 +43,7 @@
 | ID | Task | Description | Context | Deps | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 4.1 | **Dynamic Filter Generator** | Трансформация фильтров в SQL к JSONB. | Добавлен `services/api/src/core/filters.py` и тест `services/api/tests/test_dynamic_filter_generator.py`. Ruff: ok. Pytest: ok. Commit: a4a13fa. | 3.2 | [x] |
-| 4.3 | Search Service | Метод `search` (FTS + JSONB). | | 4.1, 4.2 | [ ] |
+| 4.3 | Search Service | Метод `search` (JSONB). | | 4.1 | [ ] |
 
 ## 5. Dashboard (Streamlit Management)
 | ID | Task | Description | Context | Deps | Status |
