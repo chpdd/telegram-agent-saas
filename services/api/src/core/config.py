@@ -21,6 +21,8 @@ class Settings(BaseSettings):
         default="https://openrouter.ai/api/v1",
         validation_alias=AliasChoices("LLM_BASE_URL", "OPENROUTER_BASE_URL"),
     )
+    DEFAULT_LLM_MODEL: str = "qwen/qwen3-coder:free"
+    BOT_WEBHOOK_SECRET: str | None = None
 
     MODE: str = "DEV"
 

@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from .catalog import router as catalog_router
 from .conversations import router as conversations_router
 from .system import router as system_router
+from .webhooks import router as webhooks_router
 
 
 def build_api_router() -> APIRouter:
@@ -10,4 +11,5 @@ def build_api_router() -> APIRouter:
     router.include_router(system_router)
     router.include_router(catalog_router)
     router.include_router(conversations_router)
+    router.include_router(webhooks_router)
     return router

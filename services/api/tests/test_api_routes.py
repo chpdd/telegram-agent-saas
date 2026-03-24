@@ -16,6 +16,7 @@ for module_name in [
     "api.routers.catalog",
     "api.routers.conversations",
     "api.routers.system",
+    "api.routers.webhooks",
     "core",
     "core.config",
     "core.dependencies",
@@ -185,3 +186,62 @@ def test_conversation_route_rejects_empty_content():
         )
 
     assert response.status_code == 422
+
+
+def test_webhook_route_rejects_invalid_secret():
+    app = create_app()
+    app.dependency_overrides[get_db_session] = _override_session
+    import api.routers.webhooks as webhook_router
+
+    webhook_router.settings.BOT_WEBHOOK_SECRET = "test-secret"
+
+    with TestClient(app) as client:
+        response = client.post(
+            f"/webhooks/{uuid4()}",
+            headers={"X-Telegram-Bot-Api-Secret-Token": "wrong-secret"},
+            json={"message": {"text": "hello"}},
+        )
+
+    assert response.status_code == 403
+
+
+def test_webhook_route_delegates_to_handler(mocker):
+    tenant_id = uuid4()
+    app = create_app()
+    app.dependency_overrides[get_db_session] = _override_session
+    import api.routers.webhooks as webhook_router
+
+    webhook_router.settings.BOT_WEBHOOK_SECRET = "test-secret"
+    handler_mock = mocker.patch(
+        "api.routers.webhooks.handle_telegram_webhook",
+        mocker.AsyncMock(
+            return_value={
+                "status": "processed",
+                "conversation_id": "telegram:tenant:12345",
+                "reply": "assistant reply",
+                "tool_calls": [],
+            }
+        ),
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            f"/webhooks/{tenant_id}",
+            headers={"X-Telegram-Bot-Api-Secret-Token": "test-secret"},
+            json={
+                "message": {
+                    "text": "hello",
+                    "chat": {"id": 12345},
+                    "from": {"id": 777},
+                }
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "processed",
+        "conversation_id": "telegram:tenant:12345",
+        "reply": "assistant reply",
+        "tool_calls": [],
+    }
+    handler_mock.assert_awaited_once()
