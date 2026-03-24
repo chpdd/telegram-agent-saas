@@ -79,3 +79,23 @@ async def test_search_products_invalid_logic_raises(mocker):
 
     with pytest.raises(FilterError):
         await search_products(session, tenant_id, filters=filters, logic="xor")
+
+
+@pytest.mark.asyncio
+async def test_search_products_with_or_logic_and_pagination(mocker):
+    tenant_id = uuid4()
+    products = [SimpleNamespace(name="Red Chair"), SimpleNamespace(name="Blue Chair")]
+    session = _make_session(FakeResult(products), mocker)
+    filters = [
+        JsonbFilter(field="color", op=FilterOperator.EQ, value="red"),
+        JsonbFilter(field="material", op=FilterOperator.EQ, value="wood"),
+    ]
+
+    results = await search_products(session, tenant_id, filters=filters, logic="or", offset=5, limit=20)
+
+    stmt = session.execute.call_args.args[0]
+    sql = _compiled_sql(stmt)
+    assert " OR " in sql
+    assert "OFFSET" in sql
+    assert "LIMIT" in sql
+    assert results == products

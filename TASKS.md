@@ -71,8 +71,8 @@
 ## 8. Качество и Тестирование
 | ID | Task | Description | Context | Deps | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 8.1 | Unit: CRUD Base | Тесты базовых методов БД. | Расширен `services/api/tests/test_crud_base.py`: добавлены unit-тесты на `None`-ветки для `get`, `update`, `delete`; покрыты базовые CRUD-операции и schema CRUD. Ruff: ok. Pytest: ok. Commit: TBD. | 2.4 | [x] |
-| 8.2 | Integration: Search | Тесты на точность поиска. | | 4.3 | [ ] |
+| 8.1 | Unit: CRUD Base | Тесты базовых методов БД. | Расширен `services/api/tests/test_crud_base.py`: добавлены unit-тесты на `None`-ветки для `get`, `update`, `delete`; покрыты базовые CRUD-операции и schema CRUD. Ruff: ok. Pytest: ok. Commit: bebb0f1. | 2.4 | [x] |
+| 8.2 | Integration: Search | Тесты на точность поиска. | Расширен `services/api/tests/test_search_service.py`: добавлен интеграционный сценарий `search + filters + tenancy` с `or`-логикой, пагинацией и проверкой возврата результатов. Ruff: ok. Pytest: ok. Commit: TBD. | 4.3 | [x] |
 | 8.3 | Mock: LLM API | Заглушки для OpenRouter. | | 6.2 | [ ] |
 | 8.4 | E2E: Bot Conversation | Полный цикл общения. | | 6.4 | [ ] |
 
