@@ -1,4 +1,5 @@
 import asyncio
+from functools import lru_cache
 
 import streamlit as st
 from auth import AUTH_STATUS_KEY, TENANT_ID_KEY, apply_auth
@@ -28,6 +29,18 @@ def bootstrap_runtime() -> Settings:
     )
     st.session_state.setdefault(RUNTIME_SETTINGS_KEY, settings)
     return settings
+
+
+@lru_cache(maxsize=1)
+def get_admin_event_loop() -> asyncio.AbstractEventLoop:
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    return loop
+
+
+def run_async(coro):
+    loop = get_admin_event_loop()
+    return loop.run_until_complete(coro)
 
 
 def render_auth() -> None:
@@ -84,7 +97,7 @@ def render_tenant_management() -> None:
 
     if st.button("Создать tenant"):
         try:
-            created = asyncio.run(_create_tenant(tenant_id, bot_token, system_prompt))
+            created = run_async(_create_tenant(tenant_id, bot_token, system_prompt))
             st.success(f"Tenant создан: {created['tenant_id']}")
         except ValueError as exc:
             st.error(str(exc))
@@ -92,7 +105,7 @@ def render_tenant_management() -> None:
             st.error(f"Не удалось создать tenant: {exc}")
 
     try:
-        tenants = asyncio.run(_list_tenants())
+        tenants = run_async(_list_tenants())
     except Exception as exc:  # pragma: no cover
         st.error(f"Не удалось загрузить tenants: {exc}")
         return
