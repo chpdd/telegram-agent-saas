@@ -15,12 +15,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - db_net
 
   redis:
     image: redis:alpine
     container_name: tca_redis
     ports:
       - "6379:6379"
+    networks:
+      - redis_net
 
   api:
     build: .
@@ -39,6 +43,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    networks:
+      - edge
+      - db_net
+      - redis_net
 
   dashboard:
     build: .
@@ -54,6 +62,19 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - edge
+      - db_net
 
 volumes:
   postgres_data:
+
+networks:
+  edge:
+    driver: bridge
+  db_net:
+    driver: bridge
+    internal: true
+  redis_net:
+    driver: bridge
+    internal: true
