@@ -42,7 +42,7 @@
 ## 4. Динамический Поиск и Каталог
 | ID | Task | Description | Context | Deps | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 4.1 | **Dynamic Filter Generator** | Трансформация фильтров в SQL к JSONB. | | 3.2 | [ ] |
+| 4.1 | **Dynamic Filter Generator** | Трансформация фильтров в SQL к JSONB. | Добавлен `services/api/src/core/filters.py` и тест `services/api/tests/test_dynamic_filter_generator.py`. Ruff: ok. Pytest: ok. Commit: a4a13fa. | 3.2 | [x] |
 | 4.2 | PostgreSQL FTS Setup | Миграция для `tsvector` и триггера. | | 3.6 | [ ] |
 | 4.3 | Search Service | Метод `search` (FTS + JSONB). | | 4.1, 4.2 | [ ] |
 
