@@ -14,6 +14,7 @@ for module_name in [
     "api",
     "api.routers",
     "api.routers.catalog",
+    "api.routers.conversations",
     "api.routers.system",
     "core",
     "core.config",
@@ -90,6 +91,96 @@ def test_catalog_search_route_rejects_invalid_logic():
                 "tenant_id": str(uuid4()),
                 "filters": [],
                 "logic": "xor",
+            },
+        )
+
+    assert response.status_code == 422
+
+
+def test_conversation_route_returns_assistant_message(mocker):
+    app = create_app()
+    app.dependency_overrides[get_db_session] = _override_session
+    run_mock = mocker.patch(
+        "api.routers.conversations.run_conversation_turn",
+        mocker.AsyncMock(return_value={"content": "assistant reply", "tool_calls": []}),
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/conversations/conv-1/messages",
+            json={
+                "tenant_id": str(uuid4()),
+                "chat_id": str(uuid4()),
+                "content": "hello",
+                "model": "gpt-4o-mini",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "content": "assistant reply",
+        "tool_calls": [],
+    }
+    run_mock.assert_awaited_once()
+
+
+def test_conversation_route_returns_tool_calls(mocker):
+    app = create_app()
+    app.dependency_overrides[get_db_session] = _override_session
+    run_mock = mocker.patch(
+        "api.routers.conversations.run_conversation_turn",
+        mocker.AsyncMock(
+            return_value={
+                "content": "I found a chair",
+                "tool_calls": [
+                    {
+                        "name": "catalog_tool",
+                        "args": {"filters": [{"field": "color", "op": "eq", "value": "red"}]},
+                        "result": [{"name": "Red Chair"}],
+                    }
+                ],
+            }
+        ),
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/conversations/conv-2/messages",
+            json={
+                "tenant_id": str(uuid4()),
+                "chat_id": str(uuid4()),
+                "content": "find a red chair",
+                "model": "gpt-4o-mini",
+                "system_prompt": "You are a furniture assistant",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "content": "I found a chair",
+        "tool_calls": [
+            {
+                "name": "catalog_tool",
+                "args": {"filters": [{"field": "color", "op": "eq", "value": "red"}]},
+                "result": [{"name": "Red Chair"}],
+            }
+        ],
+    }
+    run_mock.assert_awaited_once()
+
+
+def test_conversation_route_rejects_empty_content():
+    app = create_app()
+    app.dependency_overrides[get_db_session] = _override_session
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/conversations/conv-3/messages",
+            json={
+                "tenant_id": str(uuid4()),
+                "chat_id": str(uuid4()),
+                "content": "",
+                "model": "gpt-4o-mini",
             },
         )
 
