@@ -101,6 +101,17 @@ cd services/admin/src
 uv run streamlit run main.py --server.port 8501 --server.address 0.0.0.0
 ```
 
+## CI/CD
+
+- `CI`: `.github/workflows/ci.yml`
+  - `uv sync --frozen`
+  - `uv run ruff check .`
+  - `uv run pytest`
+  - `docker compose config`
+- `CD`: `.github/workflows/cd.yml`
+  - trigger: push в `main`
+  - publish images `api`, `admin`, `worker`, `bot`, `migrate` в `GHCR`
+
 ## Smoke Check
 
 1. Подними `db` и `redis`
