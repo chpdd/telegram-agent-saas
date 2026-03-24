@@ -6,10 +6,12 @@ from typing import Any
 from uuid import UUID
 
 from aiogram import Bot
+from aiogram.client.default import DefaultBotProperties
 from core.config import settings
 from fastapi import HTTPException, status
 from models.chat import Chat, ChatStatus
 from models.tenant import Tenant
+from openai import APIError, APIStatusError, RateLimitError
 from services.conversation import run_conversation_turn
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +22,9 @@ class TelegramMessageContext:
     telegram_chat_id: str
     telegram_user_id: str
     text: str
+
+
+LLM_TEMPORARY_FAILURE_MESSAGE = "Сервис перегружен. Попробуйте еще раз через минуту."
 
 
 def extract_message_context(update: dict[str, Any]) -> TelegramMessageContext | None:
@@ -104,25 +109,37 @@ async def handle_telegram_webhook(
         telegram_user_id=context.telegram_user_id,
     )
 
-    result = await run_conversation_turn(
-        session,
-        tenant_id=tenant_id,
-        chat_id=chat.id,
-        conversation_id=chat.session_id,
-        user_content=context.text,
-        model=settings.DEFAULT_LLM_MODEL,
-        system_prompt=tenant.system_prompt,
-    )
-
-    bot = Bot(token=tenant.bot_token, parse_mode="HTML")
     try:
-        await bot.send_message(chat_id=context.telegram_chat_id, text=result["content"])
+        result = await run_conversation_turn(
+            session,
+            tenant_id=tenant_id,
+            chat_id=chat.id,
+            conversation_id=chat.session_id,
+            user_content=context.text,
+            model=settings.DEFAULT_LLM_MODEL,
+            system_prompt=tenant.system_prompt,
+        )
+        reply_text = result["content"]
+        response_status = "processed"
+        tool_calls = result["tool_calls"]
+    except (RateLimitError, APIStatusError, APIError):
+        await session.rollback()
+        reply_text = LLM_TEMPORARY_FAILURE_MESSAGE
+        response_status = "deferred"
+        tool_calls = []
+
+    bot = Bot(
+        token=tenant.bot_token,
+        default=DefaultBotProperties(parse_mode="HTML"),
+    )
+    try:
+        await bot.send_message(chat_id=context.telegram_chat_id, text=reply_text)
     finally:
         await bot.session.close()
 
     return {
-        "status": "processed",
+        "status": response_status,
         "conversation_id": chat.session_id,
-        "reply": result["content"],
-        "tool_calls": result["tool_calls"],
+        "reply": reply_text,
+        "tool_calls": tool_calls,
     }
