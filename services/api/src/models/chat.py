@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import StrEnum
 from uuid import UUID, uuid4
 
 from core.database import Base
-from sqlalchemy import Index
+from sqlalchemy import Index, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -23,3 +24,4 @@ class Chat(Base):
     session_id: Mapped[str] = mapped_column(nullable=False, unique=True)
     status: Mapped[ChatStatus] = mapped_column(nullable=False, default=ChatStatus.OPEN)
     user_id: Mapped[str] = mapped_column(nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now(), onupdate=func.now())
