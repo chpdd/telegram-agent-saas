@@ -10,3 +10,6 @@ ENV/
 .vscode/
 *.db
 *.log
+.ruff_cache/
+.pytest_cache/
+data/
