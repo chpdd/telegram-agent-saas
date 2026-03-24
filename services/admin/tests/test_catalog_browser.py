@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -34,6 +34,7 @@ def test_normalize_catalog_filters_rejects_bad_tenant():
 async def test_list_catalog_products_returns_flat_rows(mocker):
     rows = [
         {
+            "id": uuid4(),
             "name": "Доставка",
             "description": None,
             "category": "Логистика",
@@ -54,5 +55,14 @@ async def test_list_catalog_products_returns_flat_rows(mocker):
         limit=10,
     )
 
-    assert products == rows
+    assert products == [
+        {
+            "id": str(rows[0]["id"]),
+            "name": "Доставка",
+            "description": None,
+            "category": "Логистика",
+            "measure": "рейс",
+            "price": 800.0,
+        }
+    ]
     session.execute.assert_awaited_once()

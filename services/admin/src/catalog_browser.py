@@ -42,6 +42,7 @@ async def list_catalog_products(
         text(
             """
             select
+                id,
                 name,
                 description,
                 attributes ->> 'category' as category,
@@ -64,6 +65,7 @@ async def list_catalog_products(
     rows = result.mappings().all()
     return [
         {
+            "id": str(row["id"]),
             "name": row["name"],
             "description": row["description"],
             "category": row["category"],

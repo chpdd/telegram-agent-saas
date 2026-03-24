@@ -6,6 +6,7 @@ import streamlit as st
 from admin_database import async_session_maker
 from auth import AUTH_STATUS_KEY, TENANT_ID_KEY, apply_auth
 from catalog_browser import list_catalog_products
+from catalog_crud import create_catalog_product, delete_catalog_product, update_catalog_product
 from catalog_seed import import_seed_catalog
 from chat_monitor import ACTIVE_CHATS_KEY, add_chat, ensure_chat_state, remove_chat
 from core.config import Settings, get_settings
@@ -118,6 +119,59 @@ async def _list_catalog_products(
         )
 
 
+async def _create_catalog_product(
+    tenant_id: str,
+    *,
+    name: str | None,
+    description: str | None,
+    category: str | None,
+    measure: str | None,
+    price: float | int | None,
+) -> dict[str, str | float | None]:
+    async with async_session_maker() as session:
+        return await create_catalog_product(
+            session,
+            tenant_id=tenant_id,
+            name=name,
+            description=description,
+            category=category,
+            measure=measure,
+            price=price,
+        )
+
+
+async def _update_catalog_product(
+    tenant_id: str,
+    *,
+    product_id: str,
+    name: str | None,
+    description: str | None,
+    category: str | None,
+    measure: str | None,
+    price: float | int | None,
+) -> dict[str, str | float | None]:
+    async with async_session_maker() as session:
+        return await update_catalog_product(
+            session,
+            tenant_id=tenant_id,
+            product_id=product_id,
+            name=name,
+            description=description,
+            category=category,
+            measure=measure,
+            price=price,
+        )
+
+
+async def _delete_catalog_product(tenant_id: str, *, product_id: str) -> None:
+    async with async_session_maker() as session:
+        await delete_catalog_product(
+            session,
+            tenant_id=tenant_id,
+            product_id=product_id,
+        )
+
+
 def render_tenant_management() -> None:
     st.subheader("Tenants")
     st.caption("Создание tenant без ручного SQL.")
@@ -202,6 +256,92 @@ def render_catalog_browser() -> None:
 
     st.dataframe(products, use_container_width=True)
     st.caption(f"Найдено позиций: {len(products)}")
+
+    product_options = {
+        f"{product['name']} ({product['category']}) [{product['id']}]": product for product in products
+    }
+    selected_label = st.selectbox("Товар для редактирования", list(product_options), key="catalog_product_selected")
+    selected_product = product_options[selected_label]
+
+    st.subheader("Редактирование каталога")
+    crud_mode = st.radio("Действие с товаром", ["Создать", "Обновить", "Удалить"], horizontal=True)
+    product_name = st.text_input(
+        "Название",
+        value=selected_product["name"] if crud_mode != "Создать" else "",
+        key="catalog_product_name",
+    )
+    product_description = st.text_area(
+        "Описание",
+        value=selected_product["description"] or "" if crud_mode != "Создать" else "",
+        height=120,
+        key="catalog_product_description",
+    )
+    product_category = st.text_input(
+        "Категория",
+        value=selected_product["category"] if crud_mode != "Создать" else category,
+        key="catalog_product_category",
+    )
+    product_measure = st.text_input(
+        "Ед. измерения",
+        value=selected_product["measure"] if crud_mode != "Создать" else "",
+        key="catalog_product_measure",
+    )
+    product_price = st.number_input(
+        "Цена",
+        min_value=0.0,
+        value=float(selected_product["price"]) if crud_mode != "Создать" else 0.0,
+        step=100.0,
+        key="catalog_product_price",
+    )
+
+    if crud_mode == "Создать":
+        if st.button("Создать товар"):
+            try:
+                created = run_async(
+                    _create_catalog_product(
+                        tenant_id,
+                        name=product_name,
+                        description=product_description,
+                        category=product_category,
+                        measure=product_measure,
+                        price=product_price,
+                    )
+                )
+                st.success(f"Товар создан: {created['id']}")
+            except ValueError as exc:
+                st.error(str(exc))
+            except Exception as exc:  # pragma: no cover
+                st.error(f"Не удалось создать товар: {exc}")
+    elif crud_mode == "Обновить":
+        if st.button("Сохранить товар"):
+            try:
+                updated = run_async(
+                    _update_catalog_product(
+                        tenant_id,
+                        product_id=selected_product["id"],
+                        name=product_name,
+                        description=product_description,
+                        category=product_category,
+                        measure=product_measure,
+                        price=product_price,
+                    )
+                )
+                st.success(f"Товар обновлён: {updated['id']}")
+            except ValueError as exc:
+                st.error(str(exc))
+            except Exception as exc:  # pragma: no cover
+                st.error(f"Не удалось обновить товар: {exc}")
+    else:
+        st.warning(f"Будет удалён товар: {selected_product['name']}")
+        if st.button("Удалить товар"):
+            try:
+                run_async(_delete_catalog_product(tenant_id, product_id=selected_product["id"]))
+                st.success("Товар удалён")
+            except ValueError as exc:
+                st.error(str(exc))
+            except Exception as exc:  # pragma: no cover
+                st.error(f"Не удалось удалить товар: {exc}")
+
     st.divider()
 
 
