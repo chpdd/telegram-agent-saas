@@ -143,6 +143,41 @@ async def test_base_crud_delete_includes_tenant_filter(mocker):
 
 
 @pytest.mark.asyncio
+async def test_base_crud_get_returns_none_when_missing(mocker):
+    tenant_id = uuid4()
+    session = _make_session(FakeResult([]), mocker)
+
+    crud = BaseCRUD(DummyTenantModel)
+    result = await crud.get(session, tenant_id, uuid4())
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_base_crud_update_returns_none_when_missing(mocker):
+    tenant_id = uuid4()
+    session = _make_session(FakeResult([]), mocker)
+
+    crud = BaseCRUD(DummyTenantModel)
+    result = await crud.update(session, tenant_id, uuid4(), {"name": "missing"})
+
+    assert result is None
+    session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_base_crud_delete_returns_none_when_missing(mocker):
+    tenant_id = uuid4()
+    session = _make_session(FakeResult([]), mocker)
+
+    crud = BaseCRUD(DummyTenantModel)
+    result = await crud.delete(session, tenant_id, uuid4())
+
+    assert result is None
+    session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_schema_crud_uses_pydantic_models(mocker):
     tenant_id = uuid4()
     session = _make_session(FakeResult([]), mocker)
