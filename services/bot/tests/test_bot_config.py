@@ -22,6 +22,7 @@ def _reload_bot_config():
 
 
 def test_bot_settings_are_loaded_from_environment_and_cached(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/test_db")
     monkeypatch.setenv("BOT_WEBHOOK_BASE_URL", "https://example.com")
     monkeypatch.setenv("BOT_WEBHOOK_SECRET", "secret")
 
@@ -31,4 +32,5 @@ def test_bot_settings_are_loaded_from_environment_and_cached(monkeypatch):
 
     assert first.BOT_WEBHOOK_BASE_URL == "https://example.com"
     assert first.BOT_WEBHOOK_SECRET == "secret"
+    assert first.db_url == "postgresql+asyncpg://test:test@localhost:5432/test_db"
     assert first is second
