@@ -3,25 +3,12 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+from api.routers import build_api_router
 from core.config import settings
 from core.logging import configure_logging, get_logger
-from fastapi import APIRouter, FastAPI
+from fastapi import FastAPI
 
 logger = get_logger(__name__)
-
-
-def build_api_router() -> APIRouter:
-    router = APIRouter()
-
-    @router.get("/health", tags=["system"])
-    async def healthcheck() -> dict[str, str]:
-        return {
-            "status": "ok",
-            "service": "api",
-            "mode": settings.MODE,
-        }
-
-    return router
 
 
 def include_routers(app: FastAPI) -> None:
