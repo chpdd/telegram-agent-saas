@@ -57,7 +57,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 6.1 | Webhook Multi-Bot | Регистрация вебхуков. | Добавлены `services/bot/src/core/config.py`, `services/bot/src/core/bot.py`, `services/bot/src/webhooks.py`, тест `services/bot/tests/test_webhooks.py`, env в `.env.example`, pytest-mock. Ruff: ok. Pytest: ok. Commit: e33b75e. | 3.1 | [x] |
 | 6.2 | AI Service Interface | Обертка над OpenRouter. | Добавлен `services/api/src/services/ai.py` (LangChain v1 `ChatOpenAI` с памятью диалога по `conversation_id`), тест `services/api/tests/test_ai_service.py`. Ruff: ok. Pytest: ok. Commit: ea1e523. | 2.1 | [x] |
-| 6.3 | Tool: `catalog_tool` | Инструментарий для LLM. | Добавлен `services/api/src/services/catalog_tool.py` как LangChain `StructuredTool` поверх поиска каталога; тест `services/api/tests/test_catalog_tool.py`. Ruff: ok. Pytest: ok. Commit: TBD. | 4.3, 6.2 | [x] |
+| 6.3 | Tool: `catalog_tool` | Инструментарий для LLM. | Добавлен `services/api/src/services/catalog_tool.py` как LangChain `StructuredTool` поверх поиска каталога; тест `services/api/tests/test_catalog_tool.py`. Ruff: ok. Pytest: ok. Commit: 97ed2fd. | 4.3, 6.2 | [x] |
 | 6.4 | AI Conversation Loop | Цикл: История -> LLM -> Ответ. | | 6.3, 3.5 | [ ] |
 
 ## 7. Background Workers (The Analyzer)
