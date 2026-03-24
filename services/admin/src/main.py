@@ -1,11 +1,13 @@
 import asyncio
 from functools import lru_cache
+from pathlib import Path
 
 import streamlit as st
+from admin_database import async_session_maker
 from auth import AUTH_STATUS_KEY, TENANT_ID_KEY, apply_auth
+from catalog_seed import import_seed_catalog
 from chat_monitor import ACTIVE_CHATS_KEY, add_chat, ensure_chat_state, remove_chat
 from core.config import Settings, get_settings
-from core.database import async_session_maker
 from schema_designer import (
     SCHEMAS_KEY,
     add_column,
@@ -19,6 +21,7 @@ from schema_designer import (
 from tenant_management import create_tenant, list_tenants
 
 RUNTIME_SETTINGS_KEY = "admin_runtime_settings"
+DEFAULT_CATALOG_SEED_PATH = Path(__file__).parents[3] / "data" / "services.json"
 
 
 def bootstrap_runtime() -> Settings:
@@ -64,6 +67,7 @@ def render_dashboard() -> None:
     st.caption(f"Mode: {settings.MODE}")
     st.info("Демо-режим: доступ ограничен.")
     render_tenant_management()
+    render_catalog_seed_import()
     render_schema_designer()
     render_live_chat_monitor()
 
@@ -84,6 +88,15 @@ async def _create_tenant(
             tenant_id=tenant_id,
             bot_token=bot_token,
             system_prompt=system_prompt,
+        )
+
+
+async def _import_catalog_seed(tenant_id: str) -> int:
+    async with async_session_maker() as session:
+        return await import_seed_catalog(
+            session,
+            tenant_id=tenant_id,
+            source_path=DEFAULT_CATALOG_SEED_PATH,
         )
 
 
@@ -115,6 +128,25 @@ def render_tenant_management() -> None:
         return
 
     st.dataframe(tenants, use_container_width=True)
+    st.divider()
+
+
+def render_catalog_seed_import() -> None:
+    st.subheader("Каталог")
+    tenant_id = st.session_state.get(TENANT_ID_KEY, "")
+    if not tenant_id:
+        st.info("Войди с tenant_id, чтобы импортировать каталог.")
+        return
+
+    st.caption(f"Импорт из `{DEFAULT_CATALOG_SEED_PATH.name}` для tenant `{tenant_id}`.")
+    if st.button("Импортировать демо-каталог"):
+        try:
+            imported_count = run_async(_import_catalog_seed(tenant_id))
+            st.success(f"Импортировано позиций: {imported_count}")
+        except ValueError as exc:
+            st.error(str(exc))
+        except Exception as exc:  # pragma: no cover
+            st.error(f"Не удалось импортировать каталог: {exc}")
     st.divider()
 
 
