@@ -1,7 +1,10 @@
+import asyncio
+
 import streamlit as st
 from auth import AUTH_STATUS_KEY, TENANT_ID_KEY, apply_auth
 from chat_monitor import ACTIVE_CHATS_KEY, add_chat, ensure_chat_state, remove_chat
 from core.config import Settings, get_settings
+from core.database import async_session_maker
 from schema_designer import (
     SCHEMAS_KEY,
     add_column,
@@ -12,6 +15,7 @@ from schema_designer import (
     update_column,
     update_schema,
 )
+from tenant_management import create_tenant, list_tenants
 
 RUNTIME_SETTINGS_KEY = "admin_runtime_settings"
 
@@ -37,14 +41,68 @@ def render_auth() -> None:
         else:
             st.error("Укажите корректный ID магазина")
 
+    st.divider()
+    render_tenant_management()
+
 
 def render_dashboard() -> None:
     st.header("Панель управления")
     settings = st.session_state[RUNTIME_SETTINGS_KEY]
     st.caption(f"Mode: {settings.MODE}")
     st.info("Демо-режим: доступ ограничен.")
+    render_tenant_management()
     render_schema_designer()
     render_live_chat_monitor()
+
+
+async def _list_tenants() -> list[dict[str, str | None]]:
+    async with async_session_maker() as session:
+        return await list_tenants(session)
+
+
+async def _create_tenant(
+    tenant_id: str | None,
+    bot_token: str | None,
+    system_prompt: str | None,
+) -> dict[str, str | None]:
+    async with async_session_maker() as session:
+        return await create_tenant(
+            session,
+            tenant_id=tenant_id,
+            bot_token=bot_token,
+            system_prompt=system_prompt,
+        )
+
+
+def render_tenant_management() -> None:
+    st.subheader("Tenants")
+    st.caption("Создание tenant без ручного SQL.")
+
+    tenant_id = st.text_input("Tenant ID (UUID, опционально)")
+    bot_token = st.text_input("Bot Token", type="password")
+    system_prompt = st.text_area("System Prompt", height=120)
+
+    if st.button("Создать tenant"):
+        try:
+            created = asyncio.run(_create_tenant(tenant_id, bot_token, system_prompt))
+            st.success(f"Tenant создан: {created['tenant_id']}")
+        except ValueError as exc:
+            st.error(str(exc))
+        except Exception as exc:  # pragma: no cover
+            st.error(f"Не удалось создать tenant: {exc}")
+
+    try:
+        tenants = asyncio.run(_list_tenants())
+    except Exception as exc:  # pragma: no cover
+        st.error(f"Не удалось загрузить tenants: {exc}")
+        return
+
+    if not tenants:
+        st.info("Tenant-ов пока нет.")
+        return
+
+    st.dataframe(tenants, use_container_width=True)
+    st.divider()
 
 
 def render_schema_designer() -> None:
