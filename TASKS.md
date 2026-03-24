@@ -79,6 +79,6 @@
 ## 9. Deployment (Docker Compose)
 | ID | Task | Description | Context | Deps | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 9.1 | UV Docker Layering | Оптимизация Dockerfile. | | 1.2 | [ ] |
+| 9.1 | UV Docker Layering | Оптимизация Dockerfile. | Добавлены `Dockerfile` и `.dockerignore`: двухстадийная сборка через `uv`, кэшируемая установка зависимостей по `pyproject.toml`/`uv.lock`, venv вынесен в `/opt/venv` для совместимости с bind mount. Проверки: `docker compose config`, `uv run pytest`. Commit: TBD. | 1.2 | [x] |
 | 9.2 | Network Isolation | Настройка сетей Docker. | | - | [ ] |
 | 9.3 | Healthchecks | Проверки готовности сервисов. | | - | [ ] |
