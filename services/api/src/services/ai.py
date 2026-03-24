@@ -14,7 +14,7 @@ class OpenRouterError(ValueError):
 _MEMORY: dict[str, list[Any]] = {}
 
 
-def _to_message(item: dict[str, Any]) -> Any:
+def to_langchain_message(item: dict[str, Any]) -> Any:
     role = item.get("role")
     content = item.get("content", "")
     if role == "system":
@@ -28,6 +28,11 @@ def _to_message(item: dict[str, Any]) -> Any:
 
 def get_conversation_history(conversation_id: str) -> list[Any]:
     return list(_MEMORY.get(conversation_id, []))
+
+
+def append_conversation_history(conversation_id: str, messages: list[Any]) -> None:
+    history = _MEMORY.setdefault(conversation_id, [])
+    history.extend(messages)
 
 
 def reset_conversation_history(conversation_id: str) -> None:
@@ -51,6 +56,25 @@ def _build_model(
     )
 
 
+def build_chat_model(
+    *,
+    model: str,
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+    extra: dict[str, Any] | None = None,
+    tools: list[Any] | None = None,
+) -> ChatOpenAI:
+    chat_model = _build_model(
+        model,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        extra=extra,
+    )
+    if tools:
+        return chat_model.bind_tools(tools)
+    return chat_model
+
+
 async def chat_completion(
     *,
     messages: list[dict[str, Any]],
@@ -66,7 +90,7 @@ async def chat_completion(
         max_tokens=max_tokens,
         extra=extra,
     )
-    formatted = [_to_message(item) for item in messages]
+    formatted = [to_langchain_message(item) for item in messages]
     if conversation_id:
         history = _MEMORY.setdefault(conversation_id, [])
         request_messages = [*history, *formatted]
