@@ -5,6 +5,7 @@ from pathlib import Path
 import streamlit as st
 from admin_database import async_session_maker
 from auth import AUTH_STATUS_KEY, TENANT_ID_KEY, apply_auth
+from catalog_browser import list_catalog_products
 from catalog_seed import import_seed_catalog
 from chat_monitor import ACTIVE_CHATS_KEY, add_chat, ensure_chat_state, remove_chat
 from core.config import Settings, get_settings
@@ -68,6 +69,7 @@ def render_dashboard() -> None:
     st.info("Демо-режим: доступ ограничен.")
     render_tenant_management()
     render_catalog_seed_import()
+    render_catalog_browser()
     render_schema_designer()
     render_live_chat_monitor()
 
@@ -97,6 +99,22 @@ async def _import_catalog_seed(tenant_id: str) -> int:
             session,
             tenant_id=tenant_id,
             source_path=DEFAULT_CATALOG_SEED_PATH,
+        )
+
+
+async def _list_catalog_products(
+    tenant_id: str,
+    category: str | None = None,
+    query: str | None = None,
+    limit: int = 100,
+) -> list[dict[str, str | float | None]]:
+    async with async_session_maker() as session:
+        return await list_catalog_products(
+            session,
+            tenant_id=tenant_id,
+            category=category,
+            query=query,
+            limit=limit,
         )
 
 
@@ -147,6 +165,43 @@ def render_catalog_seed_import() -> None:
             st.error(str(exc))
         except Exception as exc:  # pragma: no cover
             st.error(f"Не удалось импортировать каталог: {exc}")
+    st.divider()
+
+
+def render_catalog_browser() -> None:
+    st.subheader("Каталог tenant-а")
+    tenant_id = st.session_state.get(TENANT_ID_KEY, "")
+    if not tenant_id:
+        st.info("Войди с tenant_id, чтобы смотреть каталог.")
+        return
+
+    category = st.text_input("Фильтр по категории", key="catalog_browser_category")
+    query = st.text_input("Поиск по названию", key="catalog_browser_query")
+    limit = st.number_input("Лимит", min_value=1, max_value=500, value=100, step=10)
+
+    try:
+        products = run_async(
+            _list_catalog_products(
+                tenant_id,
+                category=category,
+                query=query,
+                limit=int(limit),
+            )
+        )
+    except ValueError as exc:
+        st.error(str(exc))
+        return
+    except Exception as exc:  # pragma: no cover
+        st.error(f"Не удалось загрузить каталог: {exc}")
+        return
+
+    if not products:
+        st.info("Для этого tenant-а каталог пуст.")
+        st.divider()
+        return
+
+    st.dataframe(products, use_container_width=True)
+    st.caption(f"Найдено позиций: {len(products)}")
     st.divider()
 
 

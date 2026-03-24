@@ -1,0 +1,74 @@
+from __future__ import annotations
+
+from uuid import UUID
+
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
+def normalize_catalog_filters(
+    tenant_id: str,
+    category: str | None = None,
+    query: str | None = None,
+    limit: int = 100,
+) -> dict[str, str | UUID | int | None]:
+    try:
+        tenant_uuid = UUID(tenant_id.strip())
+    except (AttributeError, ValueError) as exc:
+        raise ValueError("tenant_id должен быть валидным UUID") from exc
+
+    normalized_limit = max(1, min(limit, 500))
+    normalized_category = (category or "").strip() or None
+    normalized_query = (query or "").strip() or None
+
+    return {
+        "tenant_id": tenant_uuid,
+        "category": normalized_category,
+        "query": normalized_query,
+        "limit": normalized_limit,
+    }
+
+
+async def list_catalog_products(
+    session: AsyncSession,
+    *,
+    tenant_id: str,
+    category: str | None = None,
+    query: str | None = None,
+    limit: int = 100,
+) -> list[dict[str, str | float | None]]:
+    filters = normalize_catalog_filters(tenant_id, category, query, limit)
+    result = await session.execute(
+        text(
+            """
+            select
+                name,
+                description,
+                attributes ->> 'category' as category,
+                attributes ->> 'measure' as measure,
+                cast(attributes ->> 'price' as double precision) as price
+            from products
+            where tenant_id = :tenant_id
+              and (:category is null or attributes ->> 'category' = :category)
+              and (
+                :query is null
+                or lower(name) like lower('%' || :query || '%')
+                or lower(coalesce(description, '')) like lower('%' || :query || '%')
+              )
+            order by category nulls last, name
+            limit :limit
+            """
+        ),
+        filters,
+    )
+    rows = result.mappings().all()
+    return [
+        {
+            "name": row["name"],
+            "description": row["description"],
+            "category": row["category"],
+            "measure": row["measure"],
+            "price": row["price"],
+        }
+        for row in rows
+    ]
